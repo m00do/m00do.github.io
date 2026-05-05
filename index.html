@@ -9,25 +9,6 @@
 
 <body>
 
-    <button id="przycisk">JEJEJJEJEJ</button>
-
-    <script>
-        try {
-            var _przycisk = document.getElementById("przycisk");
-
-            let _liczba = 20;
-
-            _przycisk.addEventListener("click", (_liczba < 10) ? e => {
-                console.log("minejesz niż 10");
-            } : e => {
-                console.log("większe niż 10");
-            })
-
-        }catch(err){
-            window.location.href = "#404"
-            window.sessionStorage.setItem("ErrorMess",err);
-        }
-    </script>   
 </body>
 
 </html>
