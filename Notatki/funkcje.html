@@ -115,7 +115,6 @@ body{background-color: #141416;}
     <button class="tab" onclick="showPanel('params',this)">02 · parametry</button>
     <button class="tab" onclick="showPanel('types',this)">03 · typy zapisu</button>
     <button class="tab" onclick="showPanel('scope',this)">04 · zasięg</button>
-    <button class="tab" onclick="showPanel('higher',this)">05 · wyższy rzęd</button>
   </div>
 
   <div id="panel-basics" class="section active">
@@ -123,7 +122,7 @@ body{background-color: #141416;}
     <div class="code-wrap">
       <div class="code-header">
         <div class="code-dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
-        <span class="code-filename">przywitaj.js</span>
+        <span class="code-filename">Witaj_świecie.js</span>
       </div>
       <div class="code-body">
         <div class="line"><span class="ln">1</span><span class="line-content"><span class="cmt">// Funkcja to nazwany blok kodu gotowy do wielokrotnego użycia</span></span></div>
@@ -144,7 +143,7 @@ body{background-color: #141416;}
       <div class="callout-text">Wyobraź sobie funkcję jak <strong>przepis kuchenny</strong> — zapisujesz go raz, używasz dowolną ilość razy z różnymi składnikami.</div>
     </div>
     <div class="demo-area">
-      <div class="demo-bar"><i class="ti ti-terminal-2" aria-hidden="true"></i>&nbsp;REPL — wypróbuj</div>
+      <div class="demo-bar"><i class="ti ti-terminal-2" aria-hidden="true"></i>&nbsp;wypróbuj</div>
       <div class="demo-inner">
         <div>
           <div class="field-label">imię</div>
@@ -181,7 +180,7 @@ body{background-color: #141416;}
       <div class="ann-text">Parametry domyślne (<strong>lang = "pl"</strong>) chronią przed brakiem argumentu — funkcja nadal działa poprawnie bez przekazania tej wartości.</div>
     </div>
     <div class="demo-area">
-      <div class="demo-bar"><i class="ti ti-terminal-2" aria-hidden="true"></i>&nbsp;REPL — kalkulator</div>
+      <div class="demo-bar"><i class="ti ti-terminal-2" aria-hidden="true"></i>&nbsp;wyprubuj</div>
       <div class="demo-inner">
         <div>
           <div class="field-label">liczba A</div>
@@ -234,7 +233,7 @@ body{background-color: #141416;}
         </div>
       </div>
       <div class="compare-item">
-        <h4>arrow function</h4>
+        <h4>funkcja strzałkowa</h4>
         <div class="code-wrap"><div class="code-body mini-code" style="padding:0.75rem 0;">
           <div class="line"><span class="ln">1</span><span class="line-content"><span class="kw">const </span><span class="fn">suma</span> <span class="op">=</span></span></div>
           <div class="line"><span class="ln">2</span><span class="line-content"> (<span class="par">a</span>, <span class="par">b</span>)</span></div>
@@ -248,10 +247,10 @@ body{background-color: #141416;}
     </div>
     <div class="callout" style="margin-top:12px;">
       <i class="ti ti-info-circle callout-icon" aria-hidden="true"></i>
-      <div class="callout-text">Wszystkie trzy robią to samo. Różnią się składnią i zachowaniem <strong>this</strong>. Arrow functions dominują w nowoczesnym JS.</div>
+      <div class="callout-text">Wszystkie trzy robią to samo. Różnią się składnią i zachowaniem <strong>this</strong>. Funkcje Strzałkowe dominują w nowoczesnym JS.</div>
     </div>
     <div class="demo-area">
-      <div class="demo-bar"><i class="ti ti-terminal-2" aria-hidden="true"></i>&nbsp;REPL — konwerter temperatury (arrow)</div>
+      <div class="demo-bar"><i class="ti ti-terminal-2" aria-hidden="true"></i>&nbsp;wypróbuj - konwerter temperatury (funkcja Strzałkowa) [w sensie ten kod co tam jest]</div>
       <div class="demo-inner">
         <div>
           <div class="field-label">celsjusze (°C)</div>
@@ -289,54 +288,6 @@ body{background-color: #141416;}
       <div class="scope-card">
         <h3><i class="ti ti-lock" aria-hidden="true" style="font-size:14px;color:var(--green2);"></i> zasięg lokalny &nbsp;<span class="badge badge-err">tylko wewnątrz</span></h3>
         <p>Zmienne zdefiniowane wewnątrz funkcji istnieją wyłącznie w jej wnętrzu. Po zakończeniu funkcji znikają z pamięci.</p>
-      </div>
-    </div>
-  </div>
-
-  <div id="panel-higher" class="section">
-    <div class="section-label">// funkcje wyższego rzędu</div>
-    <div class="code-wrap">
-      <div class="code-header">
-        <div class="code-dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
-        <span class="code-filename">higher-order.js</span>
-      </div>
-      <div class="code-body">
-        <div class="line"><span class="ln">1</span><span class="line-content"><span class="kw">const </span><span class="par">n</span> <span class="op">=</span> [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>];</span></div>
-        <div class="line"><span class="ln">2</span><span class="line-content"></span></div>
-        <div class="line"><span class="ln">3</span><span class="line-content"><span class="cmt">// map — przekształca każdy element</span></span></div>
-        <div class="line hl"><span class="ln">4</span><span class="line-content"><span class="par">n</span>.<span class="fn">map</span>(<span class="par">x</span> <span class="op">=&gt;</span> <span class="par">x</span> <span class="op">* </span><span class="num">2</span>);     <span class="cmt">// [2,4,6,8,10]</span></span></div>
-        <div class="line"><span class="ln">5</span><span class="line-content"></span></div>
-        <div class="line"><span class="ln">6</span><span class="line-content"><span class="cmt">// filter — zostawia pasujące</span></span></div>
-        <div class="line hl"><span class="ln">7</span><span class="line-content"><span class="par">n</span>.<span class="fn">filter</span>(<span class="par">x</span> <span class="op">=&gt;</span> <span class="par">x</span> <span class="op">&gt;</span> <span class="num">2</span>);   <span class="cmt">// [3,4,5]</span></span></div>
-        <div class="line"><span class="ln">8</span><span class="line-content"></span></div>
-        <div class="line"><span class="ln">9</span><span class="line-content"><span class="cmt">// reduce — sprowadza do jednej wartości</span></span></div>
-        <div class="line hl"><span class="ln">10</span><span class="line-content"><span class="par">n</span>.<span class="fn">reduce</span>((<span class="par">acc</span>, <span class="par">x</span>) <span class="op">=&gt;</span> <span class="par">acc</span><span class="op">+</span><span class="par">x</span>, <span class="num">0</span>); <span class="cmt">// 15</span></span></div>
-      </div>
-    </div>
-    <div class="annotation">
-      <div class="ann-dot"></div>
-      <div class="ann-text">Funkcje wyższego rzędu <strong>przyjmują inne funkcje jako argumenty</strong> lub je zwracają. Filar programowania funkcyjnego w JS.</div>
-    </div>
-    <div class="demo-area">
-      <div class="demo-bar"><i class="ti ti-terminal-2" aria-hidden="true"></i>&nbsp;REPL — warsztat tablic</div>
-      <div class="demo-inner" style="flex-direction:column;align-items:flex-start;">
-        <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
-          <div>
-            <div class="field-label">liczby (przecinek)</div>
-            <input type="text" id="inp-arr" value="3, 7, 1, 9, 4, 2" style="width:200px;" />
-          </div>
-          <div>
-            <div class="field-label">metoda</div>
-            <select id="inp-method">
-              <option value="map2">.map(x => x × 2)</option>
-              <option value="filter">.filter(x => x > 4)</option>
-              <option value="reduce">.reduce(suma)</option>
-              <option value="sort">.sort(rosnąco)</option>
-            </select>
-          </div>
-          <button class="run-btn" onclick="runArr()">uruchom()</button>
-        </div>
-        <div class="demo-result" id="out-arr" style="width:100%;margin-top:10px;"><span style="color:var(--text3)">// wynik</span></div>
       </div>
     </div>
   </div>
