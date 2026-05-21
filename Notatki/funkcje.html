@@ -1,0 +1,387 @@
+
+<style>
+:root {
+  --bg: #2d2d35;
+  --bg2: #141416;
+  --bg3: #1a1a1e;
+  --bg4: #222228;
+  --border: #2a2a32;
+  --border2: #3a3a46;
+  --text: #e8e8f0;
+  --text2: #9090a8;
+  --text3: #55556a;
+  --accent: #7F77DD;
+  --accent2: #AFA9EC;
+  --green: #1D9E75;
+  --green2: #5DCAA5;
+  --amber: #EF9F27;
+  --coral: #D85A30;
+  --blue: #378ADD;
+  --red: #E24B4A;
+  --mono: var(--font-mono, 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body{background-color: #141416;}
+.page { padding: 2rem 0; font-family: var(--mono); background: transparent; }
+.hero { margin-bottom: 2rem; padding: 1.5rem; background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; }
+.hero-eyebrow { font-size: 11px; color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.5rem; }
+.hero h1 { font-size: 20px; font-weight: 500; color: var(--text); margin-bottom: 0.4rem; letter-spacing: -0.01em; }
+.hero p { font-size: 13px; color: var(--text2); line-height: 1.7; }
+.concept-nav { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.tab { font-family: var(--mono); font-size: 12px; padding: 5px 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg2); color: var(--text2); cursor: pointer; transition: all 0.12s; letter-spacing: 0.02em; }
+.tab:hover { border-color: var(--border2); color: var(--text); background: var(--bg3); }
+.tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.section { display: none; }
+.section.active { display: block; }
+.section-label { font-size: 10px; color: var(--text3); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 1rem; padding-left: 2px; }
+.code-wrap { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.code-header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 8px 14px; display: flex; align-items: center; gap: 8px; }
+.code-dots { display: flex; gap: 5px; }
+.dot-r { width: 10px; height: 10px; border-radius: 50%; background: #3a1f1f; border: 1px solid #5a2f2f; }
+.dot-y { width: 10px; height: 10px; border-radius: 50%; background: #3a3020; border: 1px solid #5a4a30; }
+.dot-g { width: 10px; height: 10px; border-radius: 50%; background: #1a3a28; border: 1px solid #2a5a40; }
+.code-filename { font-size: 11px; color: var(--text3); margin-left: 8px; }
+.code-body { padding: 1.25rem 0; font-size: 12.5px; line-height: 1.9; }
+.line { display: flex; }
+.line:hover { background: rgba(127,119,221,0.05); }
+.ln { color: var(--text3); user-select: none; min-width: 44px; text-align: right; padding-right: 16px; font-size: 11px; padding-top: 1px; flex-shrink: 0; border-right: 1px solid var(--border); margin-right: 16px; }
+.line-content { flex: 1; padding-right: 1.25rem; white-space: pre; }
+.hl { background: rgba(127,119,221,0.08); border-left: 2px solid var(--accent); }
+.hl .ln { border-right-color: transparent; }
+.kw { color: var(--accent2); }
+.fn { color: var(--green2); }
+.par { color: var(--amber); }
+.str { color: var(--coral); }
+.cmt { color: var(--text3); font-style: italic; }
+.num { color: var(--blue); }
+.op { color: var(--text2); }
+.annotation { display: flex; gap: 10px; align-items: flex-start; padding: 0.9rem 1rem; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; margin-top: 10px; }
+.ann-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 6px; }
+.ann-text { font-size: 12.5px; color: var(--text2); line-height: 1.65; }
+.ann-text strong { color: var(--accent2); font-weight: 500; }
+.callout { display: flex; gap: 12px; padding: 0.9rem 1.1rem; border: 1px solid var(--border); border-radius: 8px; margin-top: 10px; background: var(--bg2); }
+.callout-icon { font-size: 16px; color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+.callout-text { font-size: 12.5px; color: var(--text2); line-height: 1.65; }
+.callout-text strong { color: var(--text); font-weight: 500; }
+.demo-area { margin-top: 1.25rem; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.demo-bar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 7px 14px; font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 7px; letter-spacing: 0.06em; }
+.demo-inner { padding: 1.1rem 1.25rem; display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; background: var(--bg); }
+.field-label { font-size: 10px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 5px; }
+.demo-inner input, .demo-inner select {
+  font-family: var(--mono); font-size: 12.5px;
+  padding: 6px 10px;
+  border: 1px solid var(--border2); border-radius: 6px;
+  background: var(--bg3); color: var(--text);
+  outline: none;
+}
+.demo-inner input:focus, .demo-inner select:focus { border-color: var(--accent); }
+.demo-inner input { width: 130px; }
+.run-btn {
+  font-family: var(--mono); font-size: 12px; padding: 7px 16px;
+  border: 1px solid var(--accent); border-radius: 6px;
+  background: var(--accent); color: #fff; cursor: pointer;
+  letter-spacing: 0.04em; transition: opacity 0.1s;
+}
+.run-btn:hover { opacity: 0.85; }
+.demo-result {
+  margin-top: 10px; padding: 0.7rem 1rem;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 6px; font-size: 13px; color: var(--text);
+  width: 100%; min-height: 38px; display: flex; align-items: center; gap: 8px;
+}
+.arrow { color: var(--accent2); }
+.scope-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.scope-card { padding: 1rem 1.1rem; border: 1px solid var(--border); border-radius: 10px; background: var(--bg2); }
+.scope-card h3 { font-size: 12.5px; font-weight: 500; color: var(--text); margin-bottom: 6px; display: flex; align-items: center; gap: 7px; }
+.scope-card p { font-size: 12px; color: var(--text2); line-height: 1.6; }
+.badge { font-size: 10px; padding: 2px 8px; border-radius: 99px; font-weight: 500; letter-spacing: 0.04em; }
+.badge-ok { background: rgba(29,158,117,0.15); color: #5DCAA5; border: 1px solid rgba(29,158,117,0.3); }
+.badge-err { background: rgba(226,75,74,0.12); color: #F09595; border: 1px solid rgba(226,75,74,0.25); }
+.compare-row { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; margin-top: 10px; }
+.compare-item { padding: 0.9rem 1rem; border: 1px solid var(--border); border-radius: 10px; background: var(--bg2); }
+.compare-item h4 { font-size: 12px; font-weight: 500; color: var(--accent2); margin-bottom: 8px; }
+.mini-code { font-size: 11.5px; line-height: 1.8; }
+</style>
+
+<div class="page">
+  <div class="hero">
+    <div class="hero-eyebrow">// javascript</div>
+    <h1>Funkcje w JavaScript</h1>
+    <p>Interaktywny przewodnik — od podstaw do wzorców wyższego rzędu.</p>
+  </div>
+
+  <div class="concept-nav">
+    <button class="tab active" onclick="showPanel('basics',this)">01 · czym jest funkcja</button>
+    <button class="tab" onclick="showPanel('params',this)">02 · parametry</button>
+    <button class="tab" onclick="showPanel('types',this)">03 · typy zapisu</button>
+    <button class="tab" onclick="showPanel('scope',this)">04 · zasięg</button>
+    <button class="tab" onclick="showPanel('higher',this)">05 · wyższy rzęd</button>
+  </div>
+
+  <div id="panel-basics" class="section active">
+    <div class="section-label">// czym jest funkcja</div>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+        <span class="code-filename">przywitaj.js</span>
+      </div>
+      <div class="code-body">
+        <div class="line"><span class="ln">1</span><span class="line-content"><span class="cmt">// Funkcja to nazwany blok kodu gotowy do wielokrotnego użycia</span></span></div>
+        <div class="line hl"><span class="ln">2</span><span class="line-content"><span class="kw">function </span><span class="fn">przywitaj</span>(<span class="par">imię</span>) {</span></div>
+        <div class="line hl"><span class="ln">3</span><span class="line-content">  <span class="kw">return </span><span class="str">`Cześć, <span class="op">${</span><span class="par">imię</span><span class="op">}</span>!`</span>;</span></div>
+        <div class="line hl"><span class="ln">4</span><span class="line-content">}</span></div>
+        <div class="line"><span class="ln">5</span><span class="line-content"></span></div>
+        <div class="line"><span class="ln">6</span><span class="line-content"><span class="cmt">// Wywołanie — podajemy argument w nawiasach</span></span></div>
+        <div class="line"><span class="ln">7</span><span class="line-content"><span class="fn">przywitaj</span>(<span class="str">"Ania"</span>); <span class="cmt">// → "Cześć, Ania!"</span></span></div>
+      </div>
+    </div>
+    <div class="annotation">
+      <div class="ann-dot"></div>
+      <div class="ann-text">Słowo kluczowe <strong>function</strong> deklaruje funkcję. <strong>przywitaj</strong> to nazwa. <strong>imię</strong> w nawiasie to parametr — dane wejściowe. <strong>return</strong> zwraca wartość do wywołującego.</div>
+    </div>
+    <div class="callout">
+      <i class="ti ti-bulb callout-icon" aria-hidden="true"></i>
+      <div class="callout-text">Wyobraź sobie funkcję jak <strong>przepis kuchenny</strong> — zapisujesz go raz, używasz dowolną ilość razy z różnymi składnikami.</div>
+    </div>
+    <div class="demo-area">
+      <div class="demo-bar"><i class="ti ti-terminal-2" aria-hidden="true"></i>&nbsp;REPL — wypróbuj</div>
+      <div class="demo-inner">
+        <div>
+          <div class="field-label">imię</div>
+          <input type="text" id="inp-name" placeholder="np. Bartek" />
+        </div>
+        <button class="run-btn" onclick="runBasic()">uruchom()</button>
+        <div class="demo-result" id="out-basic"><span style="color:var(--text3)">// wynik pojawi się tutaj</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="panel-params" class="section">
+    <div class="section-label">// parametry i wartość zwracana</div>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+        <span class="code-filename">kalkulator.js</span>
+      </div>
+      <div class="code-body">
+        <div class="line"><span class="ln">1</span><span class="line-content"><span class="cmt">// Wiele parametrów oddzielamy przecinkami</span></span></div>
+        <div class="line hl"><span class="ln">2</span><span class="line-content"><span class="kw">function </span><span class="fn">dodaj</span>(<span class="par">a</span>, <span class="par">b</span>) {</span></div>
+        <div class="line hl"><span class="ln">3</span><span class="line-content">  <span class="kw">return </span><span class="par">a</span> <span class="op">+</span> <span class="par">b</span>;</span></div>
+        <div class="line hl"><span class="ln">4</span><span class="line-content">}</span></div>
+        <div class="line"><span class="ln">5</span><span class="line-content"></span></div>
+        <div class="line"><span class="ln">6</span><span class="line-content"><span class="cmt">// Parametr domyślny — użyty gdy brak wartości</span></span></div>
+        <div class="line"><span class="ln">7</span><span class="line-content"><span class="kw">function </span><span class="fn">powitanie</span>(<span class="par">imię</span>, <span class="par">lang</span> <span class="op">=</span> <span class="str">"pl"</span>) {</span></div>
+        <div class="line"><span class="ln">8</span><span class="line-content">  <span class="kw">if </span>(<span class="par">lang</span> <span class="op">=== </span><span class="str">"pl"</span>) <span class="kw">return </span><span class="str">`Cześć, <span class="op">${</span><span class="par">imię</span><span class="op">}</span>!`</span>;</span></div>
+        <div class="line"><span class="ln">9</span><span class="line-content">  <span class="kw">return </span><span class="str">`Hello, <span class="op">${</span><span class="par">imię</span><span class="op">}</span>!`</span>;</span></div>
+        <div class="line"><span class="ln">10</span><span class="line-content">}</span></div>
+      </div>
+    </div>
+    <div class="annotation">
+      <div class="ann-dot"></div>
+      <div class="ann-text">Parametry domyślne (<strong>lang = "pl"</strong>) chronią przed brakiem argumentu — funkcja nadal działa poprawnie bez przekazania tej wartości.</div>
+    </div>
+    <div class="demo-area">
+      <div class="demo-bar"><i class="ti ti-terminal-2" aria-hidden="true"></i>&nbsp;REPL — kalkulator</div>
+      <div class="demo-inner">
+        <div>
+          <div class="field-label">liczba A</div>
+          <input type="number" id="inp-a" value="5" style="width:80px;" />
+        </div>
+        <div>
+          <div class="field-label">liczba B</div>
+          <input type="number" id="inp-b" value="3" style="width:80px;" />
+        </div>
+        <div>
+          <div class="field-label">działanie</div>
+          <select id="inp-op">
+            <option>+</option><option>-</option><option>×</option><option>÷</option>
+          </select>
+        </div>
+        <button class="run-btn" onclick="runCalc()">oblicz()</button>
+        <div class="demo-result" id="out-calc"><span style="color:var(--text3)">// wynik</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="panel-types" class="section">
+    <div class="section-label">// trzy sposoby zapisu</div>
+    <div class="compare-row">
+      <div class="compare-item">
+        <h4>deklaracja</h4>
+        <div class="code-wrap"><div class="code-body mini-code" style="padding:0.75rem 0;">
+          <div class="line"><span class="ln">1</span><span class="line-content"><span class="kw">function </span><span class="fn">suma</span>(</span></div>
+          <div class="line"><span class="ln">2</span><span class="line-content">  <span class="par">a</span>, <span class="par">b</span>) {</span></div>
+          <div class="line"><span class="ln">3</span><span class="line-content">  <span class="kw">return </span><span class="par">a</span><span class="op">+</span><span class="par">b</span>;</span></div>
+          <div class="line"><span class="ln">4</span><span class="line-content">}</span></div>
+        </div></div>
+        <div class="annotation" style="margin-top:8px;">
+          <div class="ann-dot"></div>
+          <div class="ann-text" style="font-size:11.5px;">Hoistowana — działa nawet przed miejscem definicji.</div>
+        </div>
+      </div>
+      <div class="compare-item">
+        <h4>wyrażenie</h4>
+        <div class="code-wrap"><div class="code-body mini-code" style="padding:0.75rem 0;">
+          <div class="line"><span class="ln">1</span><span class="line-content"><span class="kw">const </span><span class="fn">suma</span> <span class="op">=</span></span></div>
+          <div class="line"><span class="ln">2</span><span class="line-content"> <span class="kw">function</span>(</span></div>
+          <div class="line"><span class="ln">3</span><span class="line-content">  <span class="par">a</span>, <span class="par">b</span>) {</span></div>
+          <div class="line"><span class="ln">4</span><span class="line-content">  <span class="kw">return </span><span class="par">a</span><span class="op">+</span><span class="par">b</span>;</span></div>
+          <div class="line"><span class="ln">5</span><span class="line-content">};</span></div>
+        </div></div>
+        <div class="annotation" style="margin-top:8px;">
+          <div class="ann-dot"></div>
+          <div class="ann-text" style="font-size:11.5px;">Przypisana do zmiennej. Nie jest hoistowana.</div>
+        </div>
+      </div>
+      <div class="compare-item">
+        <h4>arrow function</h4>
+        <div class="code-wrap"><div class="code-body mini-code" style="padding:0.75rem 0;">
+          <div class="line"><span class="ln">1</span><span class="line-content"><span class="kw">const </span><span class="fn">suma</span> <span class="op">=</span></span></div>
+          <div class="line"><span class="ln">2</span><span class="line-content"> (<span class="par">a</span>, <span class="par">b</span>)</span></div>
+          <div class="line"><span class="ln">3</span><span class="line-content">   <span class="op">=&gt;</span> <span class="par">a</span> <span class="op">+</span> <span class="par">b</span>;</span></div>
+        </div></div>
+        <div class="annotation" style="margin-top:8px;">
+          <div class="ann-dot"></div>
+          <div class="ann-text" style="font-size:11.5px;">Skrócony zapis. Jedno wyrażenie = auto return.</div>
+        </div>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:12px;">
+      <i class="ti ti-info-circle callout-icon" aria-hidden="true"></i>
+      <div class="callout-text">Wszystkie trzy robią to samo. Różnią się składnią i zachowaniem <strong>this</strong>. Arrow functions dominują w nowoczesnym JS.</div>
+    </div>
+    <div class="demo-area">
+      <div class="demo-bar"><i class="ti ti-terminal-2" aria-hidden="true"></i>&nbsp;REPL — konwerter temperatury (arrow)</div>
+      <div class="demo-inner">
+        <div>
+          <div class="field-label">celsjusze (°C)</div>
+          <input type="number" id="inp-temp" value="100" style="width:110px;" oninput="runTemp()" />
+        </div>
+        <div class="demo-result" id="out-temp" style="width:auto;min-width:220px;flex:1;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="panel-scope" class="section">
+    <div class="section-label">// zasięg zmiennych (scope)</div>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+        <span class="code-filename">scope.js</span>
+      </div>
+      <div class="code-body">
+        <div class="line"><span class="ln">1</span><span class="line-content"><span class="kw">const </span><span class="par">globalny</span> <span class="op">=</span> <span class="str">"widzę wszędzie"</span>;</span></div>
+        <div class="line"><span class="ln">2</span><span class="line-content"></span></div>
+        <div class="line"><span class="ln">3</span><span class="line-content"><span class="kw">function </span><span class="fn">przykład</span>() {</span></div>
+        <div class="line hl"><span class="ln">4</span><span class="line-content">  <span class="kw">const </span><span class="par">lokalny</span> <span class="op">=</span> <span class="str">"widzę tylko tu"</span>;</span></div>
+        <div class="line"><span class="ln">5</span><span class="line-content">  console.<span class="fn">log</span>(<span class="par">globalny</span>); <span class="cmt">// ✓ ok</span></span></div>
+        <div class="line"><span class="ln">6</span><span class="line-content">  console.<span class="fn">log</span>(<span class="par">lokalny</span>);  <span class="cmt">// ✓ ok</span></span></div>
+        <div class="line"><span class="ln">7</span><span class="line-content">}</span></div>
+        <div class="line"><span class="ln">8</span><span class="line-content"></span></div>
+        <div class="line"><span class="ln">9</span><span class="line-content">console.<span class="fn">log</span>(<span class="par">lokalny</span>); <span class="cmt">// ✗ ReferenceError!</span></span></div>
+      </div>
+    </div>
+    <div class="scope-grid">
+      <div class="scope-card">
+        <h3><i class="ti ti-world" aria-hidden="true" style="font-size:14px;color:var(--accent);"></i> zasięg globalny &nbsp;<span class="badge badge-ok">wszędzie</span></h3>
+        <p>Zmienne poza funkcją są dostępne z każdego miejsca w kodzie. Używaj ostrożnie — łatwo o konflikty nazw w dużych projektach.</p>
+      </div>
+      <div class="scope-card">
+        <h3><i class="ti ti-lock" aria-hidden="true" style="font-size:14px;color:var(--green2);"></i> zasięg lokalny &nbsp;<span class="badge badge-err">tylko wewnątrz</span></h3>
+        <p>Zmienne zdefiniowane wewnątrz funkcji istnieją wyłącznie w jej wnętrzu. Po zakończeniu funkcji znikają z pamięci.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="panel-higher" class="section">
+    <div class="section-label">// funkcje wyższego rzędu</div>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+        <span class="code-filename">higher-order.js</span>
+      </div>
+      <div class="code-body">
+        <div class="line"><span class="ln">1</span><span class="line-content"><span class="kw">const </span><span class="par">n</span> <span class="op">=</span> [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>];</span></div>
+        <div class="line"><span class="ln">2</span><span class="line-content"></span></div>
+        <div class="line"><span class="ln">3</span><span class="line-content"><span class="cmt">// map — przekształca każdy element</span></span></div>
+        <div class="line hl"><span class="ln">4</span><span class="line-content"><span class="par">n</span>.<span class="fn">map</span>(<span class="par">x</span> <span class="op">=&gt;</span> <span class="par">x</span> <span class="op">* </span><span class="num">2</span>);     <span class="cmt">// [2,4,6,8,10]</span></span></div>
+        <div class="line"><span class="ln">5</span><span class="line-content"></span></div>
+        <div class="line"><span class="ln">6</span><span class="line-content"><span class="cmt">// filter — zostawia pasujące</span></span></div>
+        <div class="line hl"><span class="ln">7</span><span class="line-content"><span class="par">n</span>.<span class="fn">filter</span>(<span class="par">x</span> <span class="op">=&gt;</span> <span class="par">x</span> <span class="op">&gt;</span> <span class="num">2</span>);   <span class="cmt">// [3,4,5]</span></span></div>
+        <div class="line"><span class="ln">8</span><span class="line-content"></span></div>
+        <div class="line"><span class="ln">9</span><span class="line-content"><span class="cmt">// reduce — sprowadza do jednej wartości</span></span></div>
+        <div class="line hl"><span class="ln">10</span><span class="line-content"><span class="par">n</span>.<span class="fn">reduce</span>((<span class="par">acc</span>, <span class="par">x</span>) <span class="op">=&gt;</span> <span class="par">acc</span><span class="op">+</span><span class="par">x</span>, <span class="num">0</span>); <span class="cmt">// 15</span></span></div>
+      </div>
+    </div>
+    <div class="annotation">
+      <div class="ann-dot"></div>
+      <div class="ann-text">Funkcje wyższego rzędu <strong>przyjmują inne funkcje jako argumenty</strong> lub je zwracają. Filar programowania funkcyjnego w JS.</div>
+    </div>
+    <div class="demo-area">
+      <div class="demo-bar"><i class="ti ti-terminal-2" aria-hidden="true"></i>&nbsp;REPL — warsztat tablic</div>
+      <div class="demo-inner" style="flex-direction:column;align-items:flex-start;">
+        <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+          <div>
+            <div class="field-label">liczby (przecinek)</div>
+            <input type="text" id="inp-arr" value="3, 7, 1, 9, 4, 2" style="width:200px;" />
+          </div>
+          <div>
+            <div class="field-label">metoda</div>
+            <select id="inp-method">
+              <option value="map2">.map(x => x × 2)</option>
+              <option value="filter">.filter(x => x > 4)</option>
+              <option value="reduce">.reduce(suma)</option>
+              <option value="sort">.sort(rosnąco)</option>
+            </select>
+          </div>
+          <button class="run-btn" onclick="runArr()">uruchom()</button>
+        </div>
+        <div class="demo-result" id="out-arr" style="width:100%;margin-top:10px;"><span style="color:var(--text3)">// wynik</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showPanel(id, btn) {
+  document.querySelectorAll('.section').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+function runBasic() {
+  const name = document.getElementById('inp-name').value.trim() || 'Nieznajomy';
+  document.getElementById('out-basic').innerHTML = `<span class="arrow">→</span>&nbsp;przywitaj(<span style="color:var(--coral)">"${name}"</span>) = <strong style="color:var(--green2)">"Cześć, ${name}!"</strong>`;
+}
+function runCalc() {
+  const a = parseFloat(document.getElementById('inp-a').value) || 0;
+  const b = parseFloat(document.getElementById('inp-b').value) || 0;
+  const op = document.getElementById('inp-op').value;
+  let res;
+  if (op==='+') res = a+b;
+  else if (op==='-') res = a-b;
+  else if (op==='×') res = a*b;
+  else res = b!==0 ? parseFloat((a/b).toFixed(4)) : 'Infinity';
+  document.getElementById('out-calc').innerHTML = `<span class="arrow">→</span>&nbsp;${a} ${op} ${b} = <strong style="color:var(--green2)">${res}</strong>`;
+}
+function runTemp() {
+  const c = parseFloat(document.getElementById('inp-temp').value);
+  if (isNaN(c)) return;
+  const f = (c*9/5+32).toFixed(1);
+  const k = (c+273.15).toFixed(2);
+  document.getElementById('out-temp').innerHTML = `<span class="arrow">→</span>&nbsp;<strong style="color:var(--amber)">${f} °F</strong>&nbsp;&nbsp;<span style="color:var(--text3)">|</span>&nbsp;&nbsp;<strong style="color:var(--blue)">${k} K</strong>`;
+}
+function runArr() {
+  const raw = document.getElementById('inp-arr').value.split(',').map(s=>parseFloat(s.trim())).filter(n=>!isNaN(n));
+  if (!raw.length) return;
+  const m = document.getElementById('inp-method').value;
+  let res;
+  if (m==='map2') res = raw.map(n=>n*2);
+  else if (m==='filter') res = raw.filter(n=>n>4);
+  else if (m==='reduce') res = raw.reduce((a,n)=>a+n,0);
+  else res = [...raw].sort((a,b)=>a-b);
+  const fmt = Array.isArray(res) ? `[${res.join(', ')}]` : res;
+  document.getElementById('out-arr').innerHTML = `<span class="arrow">→</span>&nbsp;[${raw}]&nbsp;<span style="color:var(--text3)">|</span>&nbsp;<strong style="color:var(--green2)">${fmt}</strong>`;
+}
+runTemp(); runCalc();
+</script>
