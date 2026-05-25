@@ -97,7 +97,8 @@
                 gry: "Pograć w gry 🎮",
                 gory: "Pojechać w góry ⛰️",
                 animu: "Oglądać animu🎬",
-                gwiazdy: "Tajemniaca"};
+                gwiazdy: "Tajemniaca"
+            };
             resultList.innerHTML = "";
             const chosen = [];
             selected.forEach(a => {
@@ -109,16 +110,6 @@
             });
             panel.classList.add("hidden");
             resultPanel.classList.remove("hidden");
-
-            const content = "Chce robic:\n" + chosen.map(t => " - " + t).join("\n");
-            const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob);
-            a.download = "odpowiedzi.txt";
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(a.href);
 
             fetch("https://formspree.io/f/mykvneaj", {
                 method: "POST",
