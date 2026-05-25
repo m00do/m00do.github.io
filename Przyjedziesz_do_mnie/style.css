@@ -1,53 +1,3 @@
-* {
-    font-family: "Space Mono", monospace;
-    text-align: center;
-}
-body {
-    background-color: rgb(255, 212, 233);
-    margin: 0;
-}
-main {
-    width: 90%;
-    max-width: 600px;
-    margin: 80px auto 0;
-    padding: 10px;
-    background-color: rgb(253, 254, 255);
-    border-radius: 25px;
-}
-h1 {
-    color: rgb(255, 212, 233);
-    margin: 40px 0;
-}
-.buttons {
-    position: relative;
-    min-height: 60px;
-}
-button {
-    padding: 10px 30px;
-    margin: 30px;
-    border: none;
-    border-radius: 15px;
-    color: white;
-    font-size: large;
-    cursor: pointer;
-}
-#Tak {
-    background-color: green;
-}
-#Nie {
-    position: fixed;
-    background-color: red;
-    transition: left 0.15s ease, top 0.15s ease;
-    z-index: 10;
-}
-
-.panel {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
     z-index: 100;
 }
 .panel.hidden {
@@ -144,6 +94,8 @@ button {
     .panel-content {
         padding: 20px 15px;
         width: 90%;
+        max-height: 85vh;
+        overflow-y: auto;
     }
     .panel-content h2 {
         font-size: 1.2rem;
@@ -151,5 +103,8 @@ button {
     .option {
         font-size: 0.9rem;
         padding: 10px 14px;
+    }
+    .panel-actions {
+        flex-wrap: wrap;
     }
 }
