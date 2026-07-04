@@ -1,0 +1,1641 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grafik Creator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --ink:#14120f;
+    --paper:#FAF9F6;
+    --panel:#FFFAFA;
+    --line:#14120f;
+    --line-soft:#d9cfb8;
+    --moss:#14120f;
+    --moss-dark:#000000;
+    --clay:#e8501f;
+    --clay-soft:#f1ded6;
+    --amber:#f6b93b;
+    --amber-soft:#fbe6b8;
+    --muted:#6b6455;
+    --blue:#2f5df0;
+    --green:#22a559;
+    --purple:#8b5cf6;
+    --radius:22px;
+    --radius-sm:14px;
+    --font-display: 'Arial Black', 'Helvetica Neue', Arial, sans-serif;
+    --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:#dfe6ef;
+    color:var(--ink);
+    font-family:var(--font-body);
+    font-size:15px;
+    line-height:1.5;
+    padding:18px;
+  }
+  .frame{
+    max-width:1500px;
+    margin:0 auto;
+    background:var(--paper);
+    border:2.5px solid var(--ink);
+    border-radius:28px;
+    overflow:hidden;
+    position:relative;
+  }
+  .frame::before{
+    content:"";
+    display:block;
+    height:10px;
+    background:var(--green);
+    margin:0 90px;
+    border-radius:0 0 10px 10px;
+  }
+  header.top{
+    padding:26px 32px 16px;
+    border-bottom:2.5px solid var(--ink);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:14px;
+  }
+  header.top h1{
+    font-family:var(--font-display);
+    font-weight:900;
+    font-size:32px;
+    margin:0;
+    letter-spacing:-0.5px;
+    text-transform:lowercase;
+  }
+  header.top .tag{
+    font-family:var(--font-mono);
+    font-size:10px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--muted);
+    font-weight:700;
+  }
+  main{
+    max-width:1400px;
+    margin:0 auto;
+    padding:26px 32px 50px;
+    display:flex;
+    gap:26px;
+    align-items:flex-start;
+  }
+  .stepper{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    width:170px;
+    flex:0 0 170px;
+  }
+  .step-btn{
+    background:var(--blue);
+    color:#fff;
+    padding:16px;
+    border-radius:var(--radius-sm);
+    border:2px solid var(--ink);
+    font-size:14px;
+    font-weight:800;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:34px;
+    min-height:96px;
+    text-align:left;
+    box-shadow:3px 3px 0 var(--ink);
+    transition:transform .12s ease;
+  }
+  .step-btn:hover{ transform:translateY(-2px); }
+  .step-btn[data-step="1"]{ background:var(--green); }
+  .step-btn[data-step="2"]{ background:var(--amber); color:var(--ink); }
+  .step-btn[data-step="3"]{ background:var(--clay); }
+  .step-btn .step-num{
+    font-family:var(--font-mono);
+    font-size:11px;
+    font-weight:700;
+    opacity:.85;
+  }
+  .step-btn.active{
+    outline:none;
+    box-shadow:5px 5px 0 var(--ink);
+  }
+  .step-btn:not(.active){ opacity:.55; }
+  .step-btn:not(.active):hover{ opacity:.85; }
+  .step-controls{
+    display:flex;
+    justify-content:space-between;
+    margin-top:22px;
+    max-width:1400px;
+  }
+  .grid-3{
+    display:block;
+    width:100%;
+  }
+  .content-col{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+  }
+  .grid-3 > section.panel{
+    display:none;
+    max-width:100%;
+    width:70%;
+    min-width:320px;
+  }
+  .grid-3 > section.panel.active-panel{
+    display:block;
+  }
+  #Panel_Grafiku.active-panel{
+    max-width:none;
+    width:100%;
+  }
+  section.panel{
+    background:var(--panel);
+    border:2px solid var(--ink);
+    border-radius:var(--radius);
+    padding:20px 20px 22px;
+  }
+  section.panel h2{
+    font-family:var(--font-display);
+    font-weight:800;
+    font-size:19px;
+    margin:0 0 4px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  section.panel h2 .num{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:#fff;
+    background:var(--ink);
+    border-radius:50%;
+    width:20px;height:20px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .sub{
+    font-size:12px;
+    color:var(--muted);
+    margin:0 0 14px;
+  }
+  label.field-label{
+    display:block;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.6px;
+    color:var(--muted);
+    margin:14px 0 5px;
+  }
+  input[type=text], input[type=date], input[type=time], textarea, select{
+    width:100%;
+    border:2px solid var(--ink);
+    border-radius:10px;
+    padding:8px 10px;
+    font-family:var(--font-body);
+    font-size:14px;
+    background:#fff;
+    color:var(--ink);
+  }
+  textarea{resize:vertical; min-height:64px;}
+  input:focus, textarea:focus, select:focus{
+    outline:2px solid var(--blue);
+    outline-offset:1px;
+    border-color:var(--blue);
+  }
+  button{
+    font-family:var(--font-body);
+    cursor:pointer;
+    border:none;
+  }
+  .btn{
+    background:var(--ink);
+    color:#fff;
+    padding:9px 16px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:700;
+    border:2px solid var(--ink);
+    white-space:nowrap;
+  }
+  .btn:hover{background:#000; transform:translateY(-1px);}
+  .btn.secondary{
+    background:transparent;
+    color:var(--ink);
+    border:2px solid var(--ink);
+  }
+  .btn.secondary:hover{background:#fff;}
+  .btn.small{padding:5px 11px; font-size:12px;}
+  .btn.ghost{
+    background:transparent;
+    color:var(--muted);
+    border:2px dashed var(--line-soft);
+  }
+  .btn.ghost:hover{border-color:var(--ink); color:var(--ink);}
+  .row{display:flex; gap:8px; margin-top:8px;}
+  .row > *{flex:1;}
+  .file-drop{
+    margin-top:10px;
+    border:2px dashed var(--line-soft);
+    border-radius:var(--radius-sm);
+    padding:14px;
+    text-align:center;
+    font-size:12.5px;
+    color:var(--muted);
+    cursor:pointer;
+    transition:border-color .15s, color .15s;
+  }
+  .file-drop:hover{border-color:var(--ink); color:var(--ink);}
+  .file-drop input{display:none;}
+  ul.plain{list-style:none; margin:12px 0 0; padding:0;}
+  .volunteer-chip{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    padding:7px 12px;
+    border:2px solid var(--ink);
+    border-radius:10px;
+    margin-bottom:7px;
+    font-size:13.5px;
+    background:#fff;
+  }
+  .volunteer-chip .del{
+    color:var(--clay);
+    font-size:15px;
+    line-height:1;
+    background:none;
+    padding:0 2px;
+  }
+  .hours-badge{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    color:#fff;
+    background:var(--green);
+    border-radius:10px;
+    padding:2px 7px;
+    margin-left:4px;
+    font-weight:700;
+  }
+  .count-pill{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    color:#fff;
+    background:var(--ink);
+    border-radius:10px;
+    padding:2px 8px;
+    display:inline-block;
+    margin-top:4px;
+    font-weight:700;
+  }
+  .dept-card{
+    border:2px solid var(--ink);
+    border-radius:var(--radius-sm);
+    padding:12px;
+    margin-bottom:12px;
+    background:#fff;
+  }
+  .dept-hours{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:4px;
+  }
+  .dept-hours .fld{
+    flex:1;
+    min-width:100px;
+  }
+  .dept-card .dept-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:8px;
+  }
+  .dept-head .dept-name{
+    font-weight:800;
+    font-size:14.5px;
+  }
+  .dept-swatch{
+    width:11px;height:11px;border-radius:3px;
+    display:inline-block; margin-right:7px;
+    border:1.5px solid var(--ink);
+  }
+  .dept-members{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:6px;
+  }
+  .member-toggle{
+    font-size:12px;
+    padding:5px 11px;
+    border-radius:999px;
+    border:2px solid var(--ink);
+    background:#fff;
+    color:var(--ink);
+    font-weight:600;
+  }
+  .member-toggle.on{
+    background:var(--ink);
+    border-color:var(--ink);
+    color:#fff;
+  }
+  .empty-note{
+    font-size:12.5px;
+    color:var(--muted);
+    font-style:italic;
+    padding:10px 0;
+  }
+  /* grafik panel */
+  .dept-nav{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+  }
+  .dept-nav .arrow-btn{
+    background:#fff;
+    border:2px solid var(--ink);
+    color:var(--ink);
+    width:34px;height:34px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px;
+    font-weight:700;
+  }
+  .dept-nav .arrow-btn:hover{background:var(--amber);}
+  .dept-nav .arrow-btn:disabled{opacity:.35; cursor:default;}
+  .dept-nav .dept-pills{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+  }
+  .dept-nav .dept-pill{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:7px 14px;
+    border-radius:999px;
+    border:2px solid var(--ink);
+    background:#fff;
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--ink);
+  }
+  .dept-nav .dept-pill.active{
+    color:#fff;
+  }
+  .dept-nav .dept-pill .dept-swatch{margin-right:0;}
+  .grafik-toolbar{
+    display:flex;
+    gap:8px;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    margin-bottom:16px;
+  }
+  .grafik-toolbar .fld{min-width:140px;}
+  table.grafik{
+    border-collapse:separate;
+    border-spacing:0;
+    width:100%;
+    font-size:13px;
+    border:2px solid var(--ink);
+    border-radius:var(--radius-sm);
+    overflow:hidden;
+  }
+  table.grafik th, table.grafik td{
+    border:1px solid var(--line-soft);
+    padding:0;
+    vertical-align:top;
+  }
+  table.grafik thead th{
+    background:var(--amber-soft);
+    padding:9px 6px;
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:0.4px;
+    text-transform:uppercase;
+    color:var(--ink);
+    font-weight:700;
+    position:sticky;
+    top:0;
+    border-bottom:2px solid var(--ink);
+  }
+  table.grafik thead th.day-head{
+    text-align:center;
+  }
+  table.grafik thead th.day-head .dow{
+    display:block;
+    font-size:9.5px;
+    color:var(--muted);
+    text-transform:none;
+    letter-spacing:0;
+  }
+  table.grafik tbody th{
+    text-align:left;
+    background:#fff;
+    padding:10px 10px;
+    min-width:130px;
+    font-weight:800;
+  }
+  table.grafik tbody th .dept-swatch{margin-right:6px;}
+  td.cell{
+    min-width:120px;
+    padding:6px !important;
+    background:#fff;
+  }
+  td.cell.weekend{ background:#f3ecdb; }
+  .tile{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:4px;
+    font-size:12px;
+    padding:4px 8px;
+    border-radius:999px;
+    background:var(--amber-soft);
+    border:1.5px solid var(--ink);
+    margin-bottom:4px;
+    font-weight:600;
+  }
+  .tile .rm{
+    color:var(--clay);
+    background:none;
+    font-size:13px;
+    line-height:1;
+    padding:0;
+  }
+  .slot-block{
+    padding:6px;
+    border-bottom:1px dashed var(--line-soft);
+  }
+  .slot-block:last-child{border-bottom:none;}
+  .slot-label{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    color:var(--muted);
+    margin-bottom:4px;
+    letter-spacing:0.3px;
+  }
+  .add-tile-btn{
+    width:100%;
+    font-size:11.5px;
+    color:var(--muted);
+    background:none;
+    border:2px dashed var(--line-soft);
+    border-radius:8px;
+    padding:4px 0;
+    font-weight:600;
+  }
+  .add-tile-btn:hover{border-color:var(--ink); color:var(--ink);}
+  .grafik-empty{
+    text-align:center;
+    padding:50px 20px;
+    color:var(--muted);
+    font-size:13.5px;
+  }
+  dialog{
+    border:2.5px solid var(--ink);
+    border-radius:var(--radius-sm);
+    padding:0;
+    box-shadow:5px 5px 0 var(--ink);
+    width:280px;
+  }
+  dialog::backdrop{background:rgba(20,20,15,.35);}
+  dialog .dh{
+    padding:14px 16px;
+    border-bottom:2px solid var(--ink);
+    font-weight:800;
+    font-size:14px;
+  }
+  dialog .db{padding:12px 16px 16px;}
+  dialog .opt{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    width:100%;
+    text-align:left;
+    padding:8px 10px;
+    border-radius:8px;
+    background:none;
+    font-size:13.5px;
+    margin-bottom:3px;
+    font-weight:600;
+  }
+  dialog .opt-hours{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    color:#fff;
+    background:var(--green);
+    border-radius:10px;
+    padding:2px 7px;
+    flex:0 0 auto;
+    font-weight:700;
+  }
+  dialog .opt:hover{background:var(--amber-soft);}
+  dialog .close-row{
+    display:flex; justify-content:flex-end; padding:0 16px 12px;
+  }
+  ::placeholder{color:#a9a493;}
+  .app-footer{
+    border-top:2px solid var(--ink);
+    padding:14px 32px;
+  }
+  .footer-note{
+    margin:0;
+    font-size:11.5px;
+    color:var(--muted);
+    text-align:center;
+  }
+  /* ---- responsywność ---- */
+  @media (max-width: 760px){
+    body{ padding:8px; }
+    .frame{ border-radius:18px; }
+    .frame::before{ margin:0 40px; height:7px; }
+    header.top{ padding:18px 16px 14px; gap:8px; }
+    header.top h1{ font-size:24px; }
+    header.top > div{ width:100%; gap:8px !important; }
+    header.top .tag{ display:block; width:100%; }
+    main{
+      flex-direction:column;
+      padding:16px 14px 36px;
+      gap:16px;
+    }
+    .stepper{
+      flex-direction:row;
+      width:100%;
+      flex:0 0 auto;
+      gap:8px;
+    }
+    .step-btn{
+      flex:1;
+      min-height:64px;
+      padding:10px;
+      gap:10px;
+      box-shadow:2px 2px 0 var(--ink);
+    }
+    .step-btn.active{ box-shadow:3px 3px 0 var(--ink); }
+    .grid-3{ width:100%; }
+    .content-col{ width:100%; }
+    .grid-3 > section.panel{ width:100%; min-width:0; max-width:100%; }
+    section.panel{ padding:16px 14px 18px; border-radius:16px; }
+    .row{ flex-direction:column; }
+    .row > *{ width:100%; }
+    .grafik-toolbar{ flex-direction:column; align-items:stretch; }
+    .grafik-toolbar .fld{ min-width:0; width:100%; }
+    .grafik-toolbar button{ width:100%; }
+    .step-controls{ flex-wrap:wrap; gap:10px; }
+    .step-controls .btn{ flex:1; text-align:center; }
+    table.grafik{ font-size:12px; }
+    table.grafik thead th{ padding:7px 4px; }
+    dialog{ width:min(280px, calc(100vw - 40px)); }
+    .app-footer{ padding:12px 16px; }
+  }
+  @media (max-width: 420px){
+    header.top h1{ font-size:20px; }
+    .step-btn{ font-size:12.5px; min-height:56px; }
+    .step-btn .step-num{ font-size:10px; }
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+<header class="top">
+  <h1>Helper Konwentowy - grafik creator</h1>
+  <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+    <span class="tag">Dyżury &middot; Wolontariusze &middot; Działy</span>
+    <div style="display:flex; gap:8px;">
+      <button class="btn secondary small" id="exportJsonBtn">⬇ Zapisz do pliku (.json)</button>
+      <button class="btn secondary small" id="importJsonBtn">⬆ Wczytaj plik (.json)</button>
+      <input type="file" id="importJsonInput" accept=".json" style="display:none;">
+    </div>
+  </div>
+</header>
+
+<main>
+  <nav class="stepper" id="stepper">
+    <button class="step-btn active" data-step="1"><span class="step-num">1</span> Wolontariusze</button>
+    <button class="step-btn" data-step="2"><span class="step-num">2</span> Działy</button>
+    <button class="step-btn" data-step="3"><span class="step-num">3</span> Grafik</button>
+  </nav>
+
+  <div class="content-col">
+  <div class="grid-3">
+
+    <!-- PANEL 1: WOLONTARIUSZE -->
+    <section class="panel active-panel" id="Panel_wolontariuszy">
+      <h2><span class="num">1</span> Wolontariusze</h2>
+      <p class="sub">Dodaj osoby ręcznie albo wgraj listę z Excela.</p>
+
+      <label class="field-label">Imię i nazwisko</label>
+      <div class="row">
+        <input type="text" id="volName" placeholder="np. Anna Kowalska">
+        <button class="btn" id="addVolBtn" style="flex:0 0 auto;">Dodaj</button>
+      </div>
+
+      <label class="field-label">Wklej listę (jedna osoba na linię)</label>
+      <textarea id="volBulk" placeholder="Anna Kowalska&#10;Jan Nowak&#10;..."></textarea>
+      <div class="row">
+        <button class="btn secondary" id="addBulkBtn">Dodaj z listy</button>
+      </div>
+
+      <label class="field-label">Plik Excel (.xlsx / .csv)</label>
+      <div class="file-drop" id="dropZone">
+        📄 Kliknij, aby wybrać plik — pierwsza kolumna arkusza zostanie odczytana jako imię i nazwisko
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+      </div>
+
+      <label class="field-label">Lista wolontariuszy <span class="count-pill" id="volCount">0</span></label>
+      <ul class="plain" id="volunteerList"></ul>
+    </section>
+
+    <!-- PANEL 2: DZIAŁY -->
+    <section class="panel" id="Panel_Dzaiłowy">
+      <h2><span class="num">2</span> Działy</h2>
+      <p class="sub">Utwórz działy i przypisz do nich wolontariuszy.</p>
+
+      <label class="field-label">Nowy dział</label>
+      <div class="row">
+        <input type="text" id="deptName" placeholder="np. Rejestracja">
+        <button class="btn" id="addDeptBtn" style="flex:0 0 auto;">Utwórz</button>
+      </div>
+
+      <label class="field-label">Lista działów</label>
+      <div id="deptList"></div>
+    </section>
+
+    <!-- PANEL 3: GRAFIK -->
+    <section class="panel" id="Panel_Grafiku">
+      <h2><span class="num">3</span> Grafik dyżurów</h2>
+      <p class="sub">Zbuduj zakres dat i przypisuj wolontariuszy do dyżurów kafelkami.</p>
+
+      <div class="grafik-toolbar">
+        <div class="fld">
+          <label class="field-label" style="margin-top:0;">Od (data)</label>
+          <input type="date" id="dateFrom">
+        </div>
+        <div class="fld">
+          <label class="field-label" style="margin-top:0;">Do (data)</label>
+          <input type="date" id="dateTo">
+        </div>
+        <button class="btn" id="buildGrafikBtn">Zbuduj grafik</button>
+        <button class="btn ghost" id="clearGrafikBtn">Wyczyść przypisania</button>
+        <button class="btn secondary" id="exportXlsxBtn">⬇ Excel (.xlsx)</button>
+        <button class="btn secondary" id="copyTableBtn">⧉ Kopiuj tabelę (Google Docs/Sheets)</button>
+      </div>
+      <p class="sub" style="margin-top:-8px;">Godziny pracy i długość dyżuru ustawia się osobno dla każdego działu w panelu „Działy”. Możesz też zmienić godziny pojedynczego dnia klikając ✎ przy jego nagłówku.</p>
+
+      <div id="deptNavWrap"></div>
+
+      <div id="grafikWrap">
+        <div class="grafik-empty">Dodaj działy w panelu obok, ustaw zakres dat i kliknij „Zbuduj grafik”.</div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="step-controls">
+    <button class="btn secondary" id="prevStepBtn">← Wstecz</button>
+    <button class="btn" id="nextStepBtn">Dalej →</button>
+  </div>
+  </div>
+</main>
+
+<footer class="app-footer">
+  <p class="footer-note">Dane zapisują się automatycznie w tej przeglądarce (localStorage) — plik działa offline.</p>
+</footer>
+</div>
+
+<dialog id="dayEditDialog">
+  <div class="dh" id="dayEditTitle">Godziny dnia</div>
+  <div class="db">
+    <label class="field-label" style="margin-top:0;">Początek</label>
+    <input type="time" id="dayEditStart">
+    <label class="field-label">Koniec</label>
+    <input type="time" id="dayEditEnd">
+    <label class="field-label">Długość dyżuru</label>
+    <select id="dayEditSlotLen">
+      <option value="0.5">30 minut</option>
+      <option value="1">1 godzina</option>
+      <option value="2">2 godziny</option>
+      <option value="3">3 godziny</option>
+      <option value="4">4 godziny</option>
+    </select>
+    <div class="row" style="margin-top:14px;">
+      <button class="btn" id="dayEditSave" style="flex:0 0 auto;">Zapisz</button>
+      <button class="btn secondary" id="dayEditCancel" style="flex:0 0 auto;">Anuluj</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="confirmDialog">
+  <div class="dh" id="confirmDialogTitle">Potwierdź</div>
+  <div class="db">
+    <p id="confirmDialogText" style="margin:0 0 14px; font-size:13.5px;"></p>
+    <div class="row" style="margin-top:0;">
+      <button class="btn secondary" id="confirmDialogNo" style="flex:1;">Anuluj</button>
+      <button class="btn" id="confirmDialogYes" style="flex:1; background:var(--clay); border-color:var(--clay);">Usuń</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="assignDialog">
+  <div class="dh" id="assignDialogTitle">Przypisz osobę</div>
+  <div class="db" id="assignDialogBody"></div>
+  <div class="close-row"><button class="btn secondary small" id="assignDialogClose">Zamknij</button></div>
+</dialog>
+
+<script>
+(function(){
+  "use strict";
+
+  const STORAGE_KEY = "grafik_creator_state_v1";
+  const DEPT_COLORS = ["#2f5df0","#f6b93b","#e8501f","#22a559","#8b5cf6","#0ea5b7","#d6336c","#5c6ac4"];
+
+  let state = {
+    Wolontariusze: [],  // [{id, nazwa}]
+    Działy: []          // [{id, nazwa, color, wolontariusze_dzialu:[], Grafik_dzialu:{Dni:[{data,start_dnia,koniec_dnia,dlugosc_dyzuru,dyzury:[{id_dyzuru,start_dyzuru,koniec_dyzuru,wolontariusze:[]}]}]}}]
+  };
+
+  function uid(){ return Math.random().toString(36).slice(2,10); }
+
+  function save(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+  }
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        const parsed = JSON.parse(raw);
+        state.Wolontariusze = parsed.Wolontariusze || [];
+        state.Działy = (parsed.Działy || []).map(normalizeDept);
+      }
+    }catch(e){}
+  }
+  function normalizeDept(d){
+    d.wolontariusze_dzialu = d.wolontariusze_dzialu || [];
+    d.godz_start = d.godz_start || "09:00";
+    d.godz_koniec = d.godz_koniec || "17:00";
+    d.dlugosc_dyzuru = d.dlugosc_dyzuru || 1;
+    d.Grafik_dzialu = d.Grafik_dzialu || {Dni:[]};
+    d.Grafik_dzialu.Dni = d.Grafik_dzialu.Dni || [];
+    return d;
+  }
+
+  function volunteerName(id){
+    const v = state.Wolontariusze.find(v=>v.id===id);
+    return v ? v.nazwa : "(usunięty)";
+  }
+
+  // ---------- PANEL 1: WOLONTARIUSZE ----------
+  function addVolunteer(nazwa){
+    nazwa = nazwa.trim();
+    if(!nazwa) return;
+    // avoid exact duplicates
+    if(state.Wolontariusze.some(v=>v.nazwa.toLowerCase()===nazwa.toLowerCase())) return;
+    state.Wolontariusze.push({id: uid(), nazwa});
+  }
+
+  function renderVolunteers(){
+    const list = document.getElementById("volunteerList");
+    list.innerHTML = "";
+    if(state.Wolontariusze.length===0){
+      list.innerHTML = '<div class="empty-note">Brak wolontariuszy — dodaj pierwszą osobę powyżej.</div>';
+    } else {
+      const hours = computeHours();
+      state.Wolontariusze
+        .slice()
+        .sort((a,b)=>a.nazwa.localeCompare(b.nazwa,'pl'))
+        .forEach(v=>{
+          const li = document.createElement("li");
+          li.className = "volunteer-chip";
+          const h = hours[v.id] || 0;
+          li.innerHTML = `<span>${escapeHtml(v.nazwa)} <span class="hours-badge">${formatHours(h)}</span></span><button class="del" title="Usuń" data-id="${v.id}">✕</button>`;
+          list.appendChild(li);
+        });
+    }
+    document.getElementById("volCount").textContent = state.Wolontariusze.length;
+  }
+
+  function escapeHtml(s){
+    return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  document.getElementById("addVolBtn").addEventListener("click", ()=>{
+    const inp = document.getElementById("volName");
+    addVolunteer(inp.value);
+    inp.value = "";
+    renderAll();
+    save();
+  });
+  document.getElementById("volName").addEventListener("keydown", e=>{
+    if(e.key==="Enter"){ document.getElementById("addVolBtn").click(); }
+  });
+
+  document.getElementById("addBulkBtn").addEventListener("click", ()=>{
+    const ta = document.getElementById("volBulk");
+    ta.value.split(/\r?\n/).forEach(line=>addVolunteer(line));
+    ta.value = "";
+    renderAll();
+    save();
+  });
+
+  document.getElementById("volunteerList").addEventListener("click", e=>{
+    const btn = e.target.closest(".del");
+    if(!btn) return;
+    const id = btn.dataset.id;
+    state.Wolontariusze = state.Wolontariusze.filter(v=>v.id!==id);
+    state.Działy.forEach(d=>{
+      d.wolontariusze_dzialu = d.wolontariusze_dzialu.filter(m=>m!==id);
+      (d.Grafik_dzialu.Dni||[]).forEach(day=>{
+        (day.dyzury||[]).forEach(dz=>{
+          dz.wolontariusze = (dz.wolontariusze||[]).filter(v=>v!==id);
+        });
+      });
+    });
+    renderAll();
+    save();
+  });
+
+  const dropZone = document.getElementById("dropZone");
+  const fileInput = document.getElementById("fileInput");
+  dropZone.addEventListener("click", ()=>fileInput.click());
+  fileInput.addEventListener("change", handleFile);
+
+  function handleFile(){
+    const file = fileInput.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(evt){
+      try{
+        const data = new Uint8Array(evt.target.result);
+        const wb = XLSX.read(data, {type:"array"});
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, {header:1});
+        rows.forEach(row=>{
+          if(!row || row.length===0) return;
+          const val = String(row[0]||"").trim();
+          if(!val) return;
+          // skip an obvious header row
+          if(/^(imi[ei]|name|nazwisko)/i.test(val)) return;
+          addVolunteer(val);
+        });
+        renderAll();
+        save();
+      }catch(err){
+        alert("Nie udało się odczytać pliku. Upewnij się, że to poprawny plik .xlsx, .xls lub .csv.");
+      }
+      fileInput.value = "";
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  // ---------- PANEL 2: DZIAŁY ----------
+  document.getElementById("addDeptBtn").addEventListener("click", ()=>{
+    const inp = document.getElementById("deptName");
+    const nazwa = inp.value.trim();
+    if(!nazwa) return;
+    state.Działy.push({
+      id: uid(),
+      nazwa,
+      color: DEPT_COLORS[state.Działy.length % DEPT_COLORS.length],
+      wolontariusze_dzialu: [],
+      godz_start: "09:00",
+      godz_koniec: "17:00",
+      dlugosc_dyzuru: 1,
+      Grafik_dzialu: { Dni: [] }
+    });
+    inp.value = "";
+    renderAll();
+    save();
+  });
+  document.getElementById("deptName").addEventListener("keydown", e=>{
+    if(e.key==="Enter"){ document.getElementById("addDeptBtn").click(); }
+  });
+
+  function renderDepartments(){
+    const wrap = document.getElementById("deptList");
+    wrap.innerHTML = "";
+    if(state.Działy.length===0){
+      wrap.innerHTML = '<div class="empty-note">Brak działów — utwórz pierwszy powyżej.</div>';
+      return;
+    }
+    state.Działy.forEach(dept=>{
+      const card = document.createElement("div");
+      card.className = "dept-card";
+      const memberChips = state.Wolontariusze.map(v=>{
+        const on = dept.wolontariusze_dzialu.includes(v.id);
+        return `<button class="member-toggle ${on?'on':''}" data-dept="${dept.id}" data-vol="${v.id}">${escapeHtml(v.nazwa)}</button>`;
+      }).join("");
+      card.innerHTML = `
+        <div class="dept-head">
+          <div class="dept-name"><span class="dept-swatch" style="background:${dept.color}"></span>${escapeHtml(dept.nazwa)}</div>
+          <button class="btn small secondary" data-del-dept="${dept.id}">Usuń dział</button>
+        </div>
+        <div class="dept-hours">
+          <div class="fld">
+            <label class="field-label" style="margin-top:0;">Początek dnia</label>
+            <input type="time" class="dept-hour-input" data-dept="${dept.id}" data-field="godz_start" value="${dept.godz_start||'09:00'}">
+          </div>
+          <div class="fld">
+            <label class="field-label" style="margin-top:0;">Koniec dnia</label>
+            <input type="time" class="dept-hour-input" data-dept="${dept.id}" data-field="godz_koniec" value="${dept.godz_koniec||'17:00'}">
+          </div>
+          <div class="fld">
+            <label class="field-label" style="margin-top:0;">Długość dyżuru</label>
+            <select class="dept-hour-input" data-dept="${dept.id}" data-field="dlugosc_dyzuru">
+              <option value="0.5" ${dept.dlugosc_dyzuru==0.5?'selected':''}>30 minut</option>
+              <option value="1" ${!dept.dlugosc_dyzuru || dept.dlugosc_dyzuru==1?'selected':''}>1 godzina</option>
+              <option value="2" ${dept.dlugosc_dyzuru==2?'selected':''}>2 godziny</option>
+              <option value="3" ${dept.dlugosc_dyzuru==3?'selected':''}>3 godziny</option>
+              <option value="4" ${dept.dlugosc_dyzuru==4?'selected':''}>4 godziny</option>
+            </select>
+          </div>
+        </div>
+        <div class="sub" style="margin:8px 0 4px;">Kliknij, aby przypisać osoby do tego działu (${dept.wolontariusze_dzialu.length})</div>
+        <div class="dept-members">
+          ${state.Wolontariusze.length ? memberChips : '<span class="empty-note">Najpierw dodaj wolontariuszy.</span>'}
+        </div>
+      `;
+      wrap.appendChild(card);
+    });
+  }
+
+  document.getElementById("deptList").addEventListener("change", e=>{
+    const inp = e.target.closest(".dept-hour-input");
+    if(!inp) return;
+    const dept = state.Działy.find(d=>d.id===inp.dataset.dept);
+    if(!dept) return;
+    const field = inp.dataset.field;
+    if(field==="dlugosc_dyzuru"){
+      dept[field] = parseFloat(inp.value) || 1;
+    } else {
+      dept[field] = inp.value;
+    }
+    if(timeToMinutes(dept.godz_koniec) <= timeToMinutes(dept.godz_start)){
+      alert("Godzina końca musi być późniejsza niż godzina początku.");
+    }
+    save();
+  });
+
+  document.getElementById("deptList").addEventListener("click", e=>{
+    const delBtn = e.target.closest("[data-del-dept]");
+    if(delBtn){
+      const id = delBtn.dataset.delDept;
+      state.Działy = state.Działy.filter(d=>d.id!==id);
+      renderAll(); save();
+      return;
+    }
+    const toggle = e.target.closest(".member-toggle");
+    if(toggle){
+      const deptId = toggle.dataset.dept;
+      const volId = toggle.dataset.vol;
+      const dept = state.Działy.find(d=>d.id===deptId);
+      if(!dept) return;
+      const idx = dept.wolontariusze_dzialu.indexOf(volId);
+      if(idx>=0){
+        dept.wolontariusze_dzialu.splice(idx,1);
+        // usuń tę osobę też z już utworzonych dyżurów tego działu
+        (dept.Grafik_dzialu.Dni||[]).forEach(day=>{
+          (day.dyzury||[]).forEach(dz=>{
+            dz.wolontariusze = (dz.wolontariusze||[]).filter(v=>v!==volId);
+          });
+        });
+      } else {
+        dept.wolontariusze_dzialu.push(volId);
+      }
+      renderAll(); save();
+    }
+  });
+
+  // ---------- PANEL 3: GRAFIK ----------
+  const DOW = ["Niedz","Pon","Wt","Śr","Czw","Pt","Sob"];
+
+  function timeToMinutes(t){
+    const [h,m] = t.split(":").map(Number);
+    return h*60+(m||0);
+  }
+  // formatuje datę wg lokalnej strefy czasowej (bez przesunięcia przez UTC, w odróżnieniu od toISOString)
+  function toDateStr(d){
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
+  function minutesToTime(mins){
+    mins = ((mins%1440)+1440)%1440;
+    const h = Math.floor(mins/60);
+    const m = mins%60;
+    return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");
+  }
+  // returns array of {start,end} strings
+  function generateSlots(start, end, slotLen){
+    const slots = [];
+    const startMin = timeToMinutes(start);
+    let endMin = timeToMinutes(end);
+    if(endMin <= startMin) return slots;
+    const step = Math.round(slotLen*60);
+    if(step<=0) return slots;
+    let guard = 0;
+    for(let m=startMin; m<endMin && guard<200; m+=step, guard++){
+      const slotEnd = Math.min(m+step, endMin);
+      slots.push({start:minutesToTime(m), end:minutesToTime(slotEnd)});
+    }
+    return slots;
+  }
+
+  // returns array of {id_dyzuru, start_dyzuru, koniec_dyzuru, wolontariusze:[]}
+  function generateDyzury(start, end, slotLen, preserveMap){
+    const slots = generateSlots(start, end, slotLen);
+    return slots.map(s=>({
+      id_dyzuru: s.start,
+      start_dyzuru: s.start,
+      koniec_dyzuru: s.end,
+      wolontariusze: (preserveMap && preserveMap[s.start]) ? preserveMap[s.start].slice() : []
+    }));
+  }
+
+  function computeHoursForDept(dept){
+    const hours = {};
+    (dept.Grafik_dzialu.Dni||[]).forEach(day=>{
+      (day.dyzury||[]).forEach(dz=>{
+        const dur = Math.max(0, timeToMinutes(dz.koniec_dyzuru) - timeToMinutes(dz.start_dyzuru)) / 60;
+        (dz.wolontariusze||[]).forEach(vid=>{
+          hours[vid] = (hours[vid]||0) + dur;
+        });
+      });
+    });
+    return hours;
+  }
+
+  function roundHours(h){
+    return Math.round((h||0)*100)/100;
+  }
+
+  // buduje tabelę wg wzoru: "Imię wolontariusza" | "Ilość godzin"
+  function buildSummaryMatrix(volunteerIds, hoursMap){
+    const header = ["Imię wolontariusza", "Ilość godzin"];
+    const rows = volunteerIds
+      .slice()
+      .sort((a,b)=>volunteerName(a).localeCompare(volunteerName(b),'pl'))
+      .map(id=>[volunteerName(id), roundHours(hoursMap[id]||0)]);
+    return [header, ...rows];
+  }
+
+  function safeSheetName(name){
+    return name.replace(/[\\\/\?\*\[\]:]/g, " ").slice(0,31) || "Dział";
+  }
+
+  // buduje siatkę działu: nagłówek dnia (scalony nad godzinami), wiersz godzin, wiersze nazwisk
+  function buildDeptGrid(dept){
+    const dni = (dept.Grafik_dzialu.Dni||[]).filter(d=>(d.dyzury||[]).length>0);
+    if(dni.length===0) return null;
+
+    const dayBlocks = [];
+    const hourRow = [];
+    let maxNames = 1;
+    let col = 0;
+    dni.forEach(day=>{
+      const dt = new Date(day.data+"T00:00:00");
+      const dow = DOW[dt.getDay()];
+      const label = `${dt.getDate()}.${String(dt.getMonth()+1).padStart(2,'0')} (${dow})`;
+      const dz = day.dyzury||[];
+      dayBlocks.push({label, startCol: col, span: dz.length});
+      dz.forEach(d=>{
+        hourRow.push(`${d.start_dyzuru}–${d.koniec_dyzuru}`);
+        maxNames = Math.max(maxNames, (d.wolontariusze||[]).length);
+        col++;
+      });
+    });
+    const totalCols = col;
+
+    const dayHeaderRow = new Array(totalCols).fill("");
+    dayBlocks.forEach(b=>{ dayHeaderRow[b.startCol] = b.label; });
+
+    const nameRows = [];
+    for(let r=0; r<maxNames; r++){
+      const row = [];
+      dni.forEach(day=>{
+        (day.dyzury||[]).forEach(dz=>{
+          const vid = (dz.wolontariusze||[])[r];
+          row.push(vid ? volunteerName(vid) : "");
+        });
+      });
+      nameRows.push(row);
+    }
+
+    return { dayBlocks, dayHeaderRow, hourRow, nameRows, totalCols };
+  }
+
+  document.getElementById("exportXlsxBtn").addEventListener("click", ()=>{
+    if(typeof XLSX === "undefined"){ alert("Biblioteka Excel nie została załadowana (brak połączenia z internetem)."); return; }
+    if(state.Wolontariusze.length===0){ alert("Najpierw dodaj wolontariuszy."); return; }
+
+    const wb = XLSX.utils.book_new();
+    const usedNames = new Set();
+
+    function appendSheet(name, matrix, merges){
+      let sheetName = safeSheetName(name);
+      let n = 2;
+      while(usedNames.has(sheetName)){ sheetName = safeSheetName(name).slice(0,28)+" "+n; n++; }
+      usedNames.add(sheetName);
+      const ws = XLSX.utils.aoa_to_sheet(matrix);
+      if(merges && merges.length) ws['!merges'] = merges;
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    }
+
+    // arkusz ogólny: wszyscy wolontariusze + suma godzin ze wszystkich działów
+    const totalHours = computeHours();
+    appendSheet("Wolontariusze", buildSummaryMatrix(state.Wolontariusze.map(v=>v.id), totalHours));
+
+    // arkusz per dział, nazwany nazwą działu: siatka dzień -> godziny -> nazwiska
+    state.Działy.forEach(dept=>{
+      const g = buildDeptGrid(dept);
+      if(!g) return;
+      const matrix = [g.dayHeaderRow, g.hourRow, ...g.nameRows];
+      const merges = g.dayBlocks
+        .filter(b=>b.span>1)
+        .map(b=>({ s:{r:0, c:b.startCol}, e:{r:0, c:b.startCol+b.span-1} }));
+      appendSheet(dept.nazwa, matrix, merges);
+    });
+
+    const stamp = toDateStr(new Date());
+    XLSX.writeFile(wb, `grafik-${stamp}.xlsx`);
+  });
+
+  document.getElementById("copyTableBtn").addEventListener("click", async ()=>{
+    if(state.Wolontariusze.length===0){ alert("Najpierw dodaj wolontariuszy."); return; }
+
+    const totalHours = computeHours();
+    const summaryMatrix = buildSummaryMatrix(state.Wolontariusze.map(v=>v.id), totalHours);
+
+    let tsv = "Wolontariusze\n";
+    tsv += summaryMatrix.map(row=>row.join("\t")).join("\n") + "\n";
+
+    let htmlTable = `<table><tr><td colspan="${summaryMatrix[0].length}"><b>Wolontariusze</b></td></tr>`;
+    summaryMatrix.forEach((row, ri)=>{
+      htmlTable += "<tr>" + row.map(cell=> ri===0 ? `<th>${escapeHtml(String(cell))}</th>` : `<td>${escapeHtml(String(cell))}</td>`).join("") + "</tr>";
+    });
+    htmlTable += "</table>";
+
+    state.Działy.forEach(dept=>{
+      const g = buildDeptGrid(dept);
+      if(!g) return;
+
+      tsv += "\n" + dept.nazwa + "\n";
+      tsv += g.dayHeaderRow.join("\t") + "\n";
+      tsv += g.hourRow.join("\t") + "\n";
+      g.nameRows.forEach(row=>{ tsv += row.join("\t") + "\n"; });
+
+      htmlTable += `<table style="margin-top:12px;"><tr><td colspan="${g.totalCols}"><b>${escapeHtml(dept.nazwa)}</b></td></tr>`;
+      htmlTable += "<tr>" + g.dayBlocks.map(b=>`<th colspan="${b.span}">${escapeHtml(b.label)}</th>`).join("") + "</tr>";
+      htmlTable += "<tr>" + g.hourRow.map(h=>`<th>${escapeHtml(h)}</th>`).join("") + "</tr>";
+      g.nameRows.forEach(row=>{
+        htmlTable += "<tr>" + row.map(cell=>`<td>${escapeHtml(cell)}</td>`).join("") + "</tr>";
+      });
+      htmlTable += "</table>";
+    });
+
+    try{
+      if(navigator.clipboard && window.ClipboardItem){
+        const item = new ClipboardItem({
+          "text/plain": new Blob([tsv], {type:"text/plain"}),
+          "text/html": new Blob([htmlTable], {type:"text/html"})
+        });
+        await navigator.clipboard.write([item]);
+      } else {
+        await navigator.clipboard.writeText(tsv);
+      }
+      alert("Tabela skopiowana! Wklej ją (Ctrl+V / Cmd+V) w Google Sheets, Google Docs lub Excelu.");
+    }catch(err){
+      // awaryjnie: pokaż tekst do ręcznego skopiowania
+      try{
+        await navigator.clipboard.writeText(tsv);
+        alert("Tabela skopiowana jako zwykły tekst! Wklej ją w Google Sheets/Docs lub Excelu.");
+      }catch(err2){
+        alert("Nie udało się skopiować automatycznie. Spróbuj ponownie lub użyj eksportu do pliku Excel.");
+      }
+    }
+  });
+
+  document.getElementById("buildGrafikBtn").addEventListener("click", ()=>{
+    const from = document.getElementById("dateFrom").value;
+    const to = document.getElementById("dateTo").value;
+    if(!from || !to){ alert("Wybierz obie daty zakresu."); return; }
+    if(from > to){ alert("Data „Od” musi być wcześniejsza niż „Do”."); return; }
+    if(state.Działy.length===0){ alert("Najpierw utwórz co najmniej jeden dział."); return; }
+
+    for(const dept of state.Działy){
+      if(timeToMinutes(dept.godz_koniec) <= timeToMinutes(dept.godz_start)){
+        alert(`Dział „${dept.nazwa}” ma nieprawidłowe godziny (koniec musi być późniejszy niż początek).`);
+        return;
+      }
+    }
+
+    state.Działy.forEach(dept=>{
+      const hourFrom = dept.godz_start || "09:00";
+      const hourTo = dept.godz_koniec || "17:00";
+      const slotLen = dept.dlugosc_dyzuru || 1;
+
+      const existingByDate = {};
+      (dept.Grafik_dzialu.Dni||[]).forEach(d=> existingByDate[d.data]=d );
+
+      const newDni = [];
+      let d = new Date(from+"T00:00:00");
+      const end = new Date(to+"T00:00:00");
+      let guard = 0;
+      while(d <= end && guard < 370){
+        const dateStr = toDateStr(d);
+        if(existingByDate[dateStr]){
+          newDni.push(existingByDate[dateStr]);
+        } else {
+          newDni.push({
+            data: dateStr,
+            start_dnia: hourFrom,
+            koniec_dnia: hourTo,
+            dlugosc_dyzuru: slotLen,
+            dyzury: generateDyzury(hourFrom, hourTo, slotLen)
+          });
+        }
+        d.setDate(d.getDate()+1);
+        guard++;
+      }
+      dept.Grafik_dzialu.Dni = newDni;
+    });
+
+    renderGrafik();
+    save();
+  });
+
+  const confirmDialog = document.getElementById("confirmDialog");
+  let confirmResolve = null;
+  function askConfirm(text){
+    document.getElementById("confirmDialogText").textContent = text;
+    confirmDialog.showModal();
+    return new Promise(resolve=>{ confirmResolve = resolve; });
+  }
+  document.getElementById("confirmDialogYes").addEventListener("click", ()=>{
+    confirmDialog.close();
+    if(confirmResolve) confirmResolve(true);
+  });
+  document.getElementById("confirmDialogNo").addEventListener("click", ()=>{
+    confirmDialog.close();
+    if(confirmResolve) confirmResolve(false);
+  });
+  confirmDialog.addEventListener("cancel", ()=>{
+    if(confirmResolve) confirmResolve(false);
+  });
+
+  document.getElementById("clearGrafikBtn").addEventListener("click", async ()=>{
+    const ok = await askConfirm("Usunąć wszystkie przypisania z grafiku?");
+    if(!ok) return;
+    state.Działy.forEach(dept=>{
+      (dept.Grafik_dzialu.Dni||[]).forEach(day=>{
+        (day.dyzury||[]).forEach(dz=>{ dz.wolontariusze = []; });
+      });
+    });
+    renderGrafik();
+    renderVolunteers();
+    save();
+  });
+
+  let currentDeptId = null;
+
+  function renderDeptNav(){
+    const wrap = document.getElementById("deptNavWrap");
+    if(state.Działy.length===0){ wrap.innerHTML = ""; return; }
+    if(!currentDeptId || !state.Działy.some(d=>d.id===currentDeptId)){
+      currentDeptId = state.Działy[0].id;
+    }
+    const idx = state.Działy.findIndex(d=>d.id===currentDeptId);
+    const pills = state.Działy.map((d)=>{
+      const active = d.id===currentDeptId;
+      return `<button class="dept-pill${active?' active':''}" style="${active?`background:${d.color};`:''}" data-goto-dept="${d.id}">
+        <span class="dept-swatch" style="background:${active?'#fff':d.color}"></span>${escapeHtml(d.nazwa)}
+      </button>`;
+    }).join("");
+    wrap.innerHTML = `<div class="dept-nav">
+      <button class="arrow-btn" id="deptPrevBtn" ${idx<=0?'disabled':''} title="Poprzedni dział">←</button>
+      <div class="dept-pills">${pills}</div>
+      <button class="arrow-btn" id="deptNextBtn" ${idx>=state.Działy.length-1?'disabled':''} title="Następny dział">→</button>
+    </div>`;
+  }
+
+  document.getElementById("deptNavWrap").addEventListener("click", e=>{
+    const goto = e.target.closest("[data-goto-dept]");
+    if(goto){ currentDeptId = goto.dataset.gotoDept; renderGrafik(); return; }
+    const prev = e.target.closest("#deptPrevBtn");
+    const next = e.target.closest("#deptNextBtn");
+    if(prev || next){
+      const idx = state.Działy.findIndex(d=>d.id===currentDeptId);
+      const newIdx = prev ? idx-1 : idx+1;
+      if(newIdx>=0 && newIdx<state.Działy.length){
+        currentDeptId = state.Działy[newIdx].id;
+        renderGrafik();
+      }
+    }
+  });
+
+  function renderGrafik(){
+    renderDeptNav();
+    const wrap = document.getElementById("grafikWrap");
+    if(state.Działy.length===0){
+      wrap.innerHTML = '<div class="grafik-empty">Najpierw utwórz co najmniej jeden dział.</div>';
+      return;
+    }
+    const dept = state.Działy.find(d=>d.id===currentDeptId) || state.Działy[0];
+    const dni = dept.Grafik_dzialu.Dni || [];
+    if(dni.length===0){
+      wrap.innerHTML = '<div class="grafik-empty">Ustaw zakres dat i godziny, po czym kliknij „Zbuduj grafik”.</div>';
+      return;
+    }
+    let thead = '<tr>';
+    dni.forEach(day=>{
+      const dt = new Date(day.data+"T00:00:00");
+      const dow = DOW[dt.getDay()];
+      const weekend = (dt.getDay()===0 || dt.getDay()===6);
+      thead += `<th class="day-head${weekend?' weekend':''}">
+          ${dt.getDate()}.${String(dt.getMonth()+1).padStart(2,'0')}<span class="dow">${dow}</span>
+          <span class="dow">${day.start_dnia}–${day.koniec_dnia}</span>
+          <button class="btn ghost small" style="margin-top:4px; padding:2px 7px;" data-edit-dept="${dept.id}" data-edit-day="${day.data}" title="Zmień godziny">✎ godziny</button>
+        </th>`;
+    });
+    thead += "</tr>";
+
+    let tbody = "<tr>";
+    dni.forEach(day=>{
+      const dt = new Date(day.data+"T00:00:00");
+      const weekend = (dt.getDay()===0 || dt.getDay()===6);
+      const dyzury = day.dyzury || [];
+      let slotHtml = "";
+      if(dyzury.length===0){
+        slotHtml = '<div class="empty-note" style="padding:4px 0;">brak godzin</div>';
+      } else {
+        slotHtml = dyzury.map(dz=>{
+          const tiles = (dz.wolontariusze||[]).map(vid=>
+            `<div class="tile"><span>${escapeHtml(volunteerName(vid))}</span><button class="rm" data-dept="${dept.id}" data-day="${day.data}" data-dyzur="${dz.id_dyzuru}" data-vol="${vid}" title="Usuń">✕</button></div>`
+          ).join("");
+          return `<div class="slot-block">
+              <div class="slot-label">${dz.start_dyzuru}–${dz.koniec_dyzuru}</div>
+              ${tiles}
+              <button class="add-tile-btn" data-dept="${dept.id}" data-day="${day.data}" data-dyzur="${dz.id_dyzuru}">+ dodaj</button>
+            </div>`;
+        }).join("");
+      }
+      tbody += `<td class="cell${weekend?' weekend':''}">${slotHtml}</td>`;
+    });
+    tbody += "</tr>";
+
+    wrap.innerHTML = `<div style="overflow-x:auto;"><table class="grafik"><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>`;
+  }
+
+  function findDyzur(deptId, dateStr, dyzurId){
+    const dept = state.Działy.find(d=>d.id===deptId);
+    if(!dept) return {};
+    const day = (dept.Grafik_dzialu.Dni||[]).find(d=>d.data===dateStr);
+    if(!day) return {dept};
+    const dz = (day.dyzury||[]).find(z=>z.id_dyzuru===dyzurId);
+    return {dept, day, dz};
+  }
+
+  document.getElementById("grafikWrap").addEventListener("click", e=>{
+    const editDay = e.target.closest("[data-edit-day]");
+    if(editDay){
+      openDayEditDialog(editDay.dataset.editDept, editDay.dataset.editDay);
+      return;
+    }
+    const rm = e.target.closest(".rm");
+    if(rm){
+      const {dz} = findDyzur(rm.dataset.dept, rm.dataset.day, rm.dataset.dyzur);
+      if(dz){ dz.wolontariusze = (dz.wolontariusze||[]).filter(v=>v!==rm.dataset.vol); }
+      renderGrafik(); renderVolunteers(); save();
+      return;
+    }
+    const addBtn = e.target.closest(".add-tile-btn");
+    if(addBtn){
+      openAssignDialog(addBtn.dataset.dept, addBtn.dataset.day, addBtn.dataset.dyzur);
+    }
+  });
+
+  const dialog = document.getElementById("assignDialog");
+  document.getElementById("assignDialogClose").addEventListener("click", ()=>dialog.close());
+
+  function openAssignDialog(deptId, dateStr, dyzurId){
+    const {dept, day, dz} = findDyzur(deptId, dateStr, dyzurId);
+    if(!dept || !dz) return;
+    const dt = new Date(dateStr+"T00:00:00");
+    document.getElementById("assignDialogTitle").textContent =
+      `${dept.nazwa} — ${dt.getDate()}.${String(dt.getMonth()+1).padStart(2,'0')} · ${dz.start_dyzuru}–${dz.koniec_dyzuru}`;
+
+    const body = document.getElementById("assignDialogBody");
+    const already = dz.wolontariusze || [];
+    const candidates = dept.wolontariusze_dzialu.filter(id=>!already.includes(id));
+
+    if(dept.wolontariusze_dzialu.length===0){
+      body.innerHTML = '<div class="empty-note">Ten dział nie ma jeszcze przypisanych wolontariuszy. Dodaj ich w panelu „Działy”.</div>';
+    } else if(candidates.length===0){
+      body.innerHTML = '<div class="empty-note">Wszyscy członkowie działu są już przypisani do tego dyżuru.</div>';
+    } else {
+      const hours = computeHours();
+      body.innerHTML = candidates.map(id=>
+        `<button class="opt" data-dept="${deptId}" data-day="${dateStr}" data-dyzur="${dyzurId}" data-vol="${id}">
+           <span>${escapeHtml(volunteerName(id))}</span>
+           <span class="opt-hours">${formatHours(hours[id]||0)}</span>
+         </button>`
+      ).join("");
+    }
+    dialog.showModal();
+  }
+
+  document.getElementById("assignDialogBody").addEventListener("click", e=>{
+    const opt = e.target.closest(".opt");
+    if(!opt) return;
+    const {dz} = findDyzur(opt.dataset.dept, opt.dataset.day, opt.dataset.dyzur);
+    if(dz){
+      dz.wolontariusze = dz.wolontariusze || [];
+      dz.wolontariusze.push(opt.dataset.vol);
+    }
+    dialog.close();
+    renderGrafik();
+    renderVolunteers();
+    save();
+  });
+
+  // ---- day hours edit dialog ----
+  const dayEditDialog = document.getElementById("dayEditDialog");
+  let dayEditTarget = null;
+
+  function openDayEditDialog(deptId, dateStr){
+    const dept = state.Działy.find(d=>d.id===deptId);
+    if(!dept) return;
+    const day = (dept.Grafik_dzialu.Dni||[]).find(d=>d.data===dateStr);
+    if(!day) return;
+    dayEditTarget = {deptId, dateStr};
+    const dt = new Date(dateStr+"T00:00:00");
+    document.getElementById("dayEditTitle").textContent =
+      `Godziny — ${dt.getDate()}.${String(dt.getMonth()+1).padStart(2,'0')}.${dt.getFullYear()}`;
+    document.getElementById("dayEditStart").value = day.start_dnia;
+    document.getElementById("dayEditEnd").value = day.koniec_dnia;
+    document.getElementById("dayEditSlotLen").value = String(day.dlugosc_dyzuru||1);
+    dayEditDialog.showModal();
+  }
+
+  document.getElementById("dayEditCancel").addEventListener("click", ()=>dayEditDialog.close());
+  document.getElementById("dayEditSave").addEventListener("click", ()=>{
+    if(!dayEditTarget) { dayEditDialog.close(); return; }
+    const dept = state.Działy.find(d=>d.id===dayEditTarget.deptId);
+    if(!dept){ dayEditDialog.close(); return; }
+    const day = (dept.Grafik_dzialu.Dni||[]).find(d=>d.data===dayEditTarget.dateStr);
+    if(!day){ dayEditDialog.close(); return; }
+    const start = document.getElementById("dayEditStart").value;
+    const end = document.getElementById("dayEditEnd").value;
+    const slotLen = parseFloat(document.getElementById("dayEditSlotLen").value) || 1;
+    if(!start || !end || timeToMinutes(end) <= timeToMinutes(start)){
+      alert("Godzina końca musi być późniejsza niż godzina początku.");
+      return;
+    }
+    // zachowaj istniejące przypisania tam, gdzie godzina startu dyżuru się nie zmieniła
+    const preserveMap = {};
+    (day.dyzury||[]).forEach(dz=>{ preserveMap[dz.start_dyzuru] = dz.wolontariusze||[]; });
+
+    day.start_dnia = start;
+    day.koniec_dnia = end;
+    day.dlugosc_dyzuru = slotLen;
+    day.dyzury = generateDyzury(start, end, slotLen, preserveMap);
+
+    dayEditDialog.close();
+    renderGrafik();
+    renderVolunteers();
+    save();
+  });
+
+  function computeHours(){
+    const hours = {};
+    state.Działy.forEach(dept=>{
+      (dept.Grafik_dzialu.Dni||[]).forEach(day=>{
+        (day.dyzury||[]).forEach(dz=>{
+          const dur = Math.max(0, timeToMinutes(dz.koniec_dyzuru) - timeToMinutes(dz.start_dyzuru)) / 60;
+          (dz.wolontariusze||[]).forEach(vid=>{
+            hours[vid] = (hours[vid]||0) + dur;
+          });
+        });
+      });
+    });
+    return hours;
+  }
+  function formatHours(h){
+    if(!h) return "0 godz.";
+    const rounded = Math.round(h*100)/100;
+    return (rounded % 1 === 0 ? rounded : rounded.toFixed(1)) + " godz.";
+  }
+
+  document.getElementById("exportJsonBtn").addEventListener("click", ()=>{
+    const dataStr = JSON.stringify(state, null, 2);
+    const blob = new Blob([dataStr], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const stamp = toDateStr(new Date());
+    a.href = url;
+    a.download = `grafik-creator-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById("importJsonBtn").addEventListener("click", ()=>{
+    document.getElementById("importJsonInput").click();
+  });
+  document.getElementById("importJsonInput").addEventListener("change", function(){
+    const file = this.files[0];
+    if(!file) return;
+    const inputEl = this;
+    const reader = new FileReader();
+    reader.onload = function(evt){
+      try{
+        const parsed = JSON.parse(evt.target.result);
+        if(!parsed || typeof parsed !== "object") throw new Error("bad file");
+        state = {
+          Wolontariusze: parsed.Wolontariusze || [],
+          Działy: (parsed.Działy || []).map(normalizeDept)
+        };
+        currentDeptId = state.Działy.length ? state.Działy[0].id : null;
+        const firstDni = state.Działy.length ? (state.Działy[0].Grafik_dzialu.Dni||[]) : [];
+        if(firstDni.length){
+          document.getElementById("dateFrom").value = firstDni[0].data;
+          document.getElementById("dateTo").value = firstDni[firstDni.length-1].data;
+        }
+        renderAll();
+        save();
+      }catch(err){
+        alert("Nie udało się wczytać pliku. Upewnij się, że to poprawny plik .json wyeksportowany z tej aplikacji.");
+      }
+      inputEl.value = "";
+    };
+    reader.readAsText(file);
+  });
+
+  function renderAll(){
+    renderVolunteers();
+    renderDepartments();
+    renderGrafik();
+  }
+
+  // ---------- NAWIGACJA KROKOWA ----------
+  let currentStep = 1;
+  const stepPanels = {
+    1: document.getElementById("Panel_wolontariuszy"),
+    2: document.getElementById("Panel_Dzaiłowy"),
+    3: document.getElementById("Panel_Grafiku")
+  };
+  const stepBtns = Array.from(document.querySelectorAll(".step-btn"));
+  const prevBtn = document.getElementById("prevStepBtn");
+  const nextBtn = document.getElementById("nextStepBtn");
+
+  function goToStep(n){
+    currentStep = n;
+    Object.keys(stepPanels).forEach(k=>{
+      stepPanels[k].classList.toggle("active-panel", Number(k)===n);
+    });
+    stepBtns.forEach(b=>{
+      b.classList.toggle("active", Number(b.dataset.step)===n);
+    });
+    prevBtn.style.visibility = n===1 ? "hidden" : "visible";
+    nextBtn.textContent = n===3 ? "Gotowe ✓" : "Dalej →";
+    nextBtn.style.visibility = n===3 ? "hidden" : "visible";
+    window.scrollTo({top:0, behavior:"smooth"});
+  }
+
+  stepBtns.forEach(b=>{
+    b.addEventListener("click", ()=>goToStep(Number(b.dataset.step)));
+  });
+  prevBtn.addEventListener("click", ()=>{ if(currentStep>1) goToStep(currentStep-1); });
+  nextBtn.addEventListener("click", ()=>{ if(currentStep<3) goToStep(currentStep+1); });
+
+  goToStep(1);
+
+  // init
+  load();
+  {
+    const firstDni = state.Działy.length ? (state.Działy[0].Grafik_dzialu.Dni||[]) : [];
+    if(firstDni.length){
+      document.getElementById("dateFrom").value = firstDni[0].data;
+      document.getElementById("dateTo").value = firstDni[firstDni.length-1].data;
+    }
+  }
+  renderAll();
+
+})();
+</script>
+</body>
+</html>
