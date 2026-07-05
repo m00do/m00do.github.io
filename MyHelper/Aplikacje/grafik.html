@@ -768,9 +768,6 @@
     <select id="dayEditSlotLen">
       <option value="0.5">30 minut</option>
       <option value="1">1 godzina</option>
-      <option value="2">2 godziny</option>
-      <option value="3">3 godziny</option>
-      <option value="4">4 godziny</option>
     </select>
     <div class="row" style="margin-top:14px;">
       <button class="btn" id="dayEditSave" style="flex:0 0 auto;">Zapisz</button>
@@ -983,26 +980,6 @@
           <div class="dept-name"><span class="dept-swatch" style="background:${dept.color}"></span>${escapeHtml(dept.nazwa)}</div>
           <button class="btn small secondary" data-del-dept="${dept.id}">Usuń dział</button>
         </div>
-        <div class="dept-hours">
-          <div class="fld">
-            <label class="field-label" style="margin-top:0;">Początek dnia</label>
-            <input type="time" class="dept-hour-input" data-dept="${dept.id}" data-field="godz_start" value="${dept.godz_start||'09:00'}">
-          </div>
-          <div class="fld">
-            <label class="field-label" style="margin-top:0;">Koniec dnia</label>
-            <input type="time" class="dept-hour-input" data-dept="${dept.id}" data-field="godz_koniec" value="${dept.godz_koniec||'17:00'}">
-          </div>
-          <div class="fld">
-            <label class="field-label" style="margin-top:0;">Długość dyżuru</label>
-            <select class="dept-hour-input" data-dept="${dept.id}" data-field="dlugosc_dyzuru">
-              <option value="0.5" ${dept.dlugosc_dyzuru==0.5?'selected':''}>30 minut</option>
-              <option value="1" ${!dept.dlugosc_dyzuru || dept.dlugosc_dyzuru==1?'selected':''}>1 godzina</option>
-              <option value="2" ${dept.dlugosc_dyzuru==2?'selected':''}>2 godziny</option>
-              <option value="3" ${dept.dlugosc_dyzuru==3?'selected':''}>3 godziny</option>
-              <option value="4" ${dept.dlugosc_dyzuru==4?'selected':''}>4 godziny</option>
-            </select>
-          </div>
-        </div>
         <div class="sub" style="margin:8px 0 4px;">Kliknij, aby przypisać osoby do tego działu (${dept.wolontariusze_dzialu.length})</div>
         <div class="dept-members">
           ${state.Wolontariusze.length ? memberChips : '<span class="empty-note">Najpierw dodaj wolontariuszy.</span>'}
@@ -1011,23 +988,6 @@
       wrap.appendChild(card);
     });
   }
-
-  document.getElementById("deptList").addEventListener("change", e=>{
-    const inp = e.target.closest(".dept-hour-input");
-    if(!inp) return;
-    const dept = state.Działy.find(d=>d.id===inp.dataset.dept);
-    if(!dept) return;
-    const field = inp.dataset.field;
-    if(field==="dlugosc_dyzuru"){
-      dept[field] = parseFloat(inp.value) || 1;
-    } else {
-      dept[field] = inp.value;
-    }
-    if(timeToMinutes(dept.godz_koniec) <= timeToMinutes(dept.godz_start)){
-      alert("Godzina końca musi być późniejsza niż godzina początku.");
-    }
-    save();
-  });
 
   document.getElementById("deptList").addEventListener("click", e=>{
     const delBtn = e.target.closest("[data-del-dept]");
