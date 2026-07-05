@@ -467,6 +467,16 @@
     margin-bottom:4px;
     font-weight:600;
   }
+  .tile.conflict{
+    background:var(--clay-soft);
+    border-color:var(--clay);
+  }
+  .tile .conflict-flag{
+    color:var(--clay);
+    font-size:12px;
+    line-height:1;
+    margin-right:2px;
+  }
   .tile .rm{
     color:var(--clay);
     background:none;
@@ -502,6 +512,36 @@
     padding:50px 20px;
     color:var(--muted);
     font-size:13.5px;
+  }
+  .conflict-banner{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--clay-soft);
+    border:2px solid var(--clay);
+    border-radius:var(--radius-sm);
+    padding:10px 14px;
+    font-size:12.5px;
+    font-weight:700;
+    margin-bottom:14px;
+  }
+  .conflict-banner .cnt{
+    font-family:var(--font-mono);
+    font-size:11px;
+    background:var(--clay);
+    color:#fff;
+    border-radius:10px;
+    padding:2px 8px;
+  }
+  .opt.opt-conflict{
+    background:var(--clay-soft);
+  }
+  .opt-conflict-note{
+    font-size:10.5px;
+    color:var(--clay);
+    font-weight:700;
+    display:block;
+    margin-top:2px;
   }
   dialog{
     border:2.5px solid var(--ink);
@@ -696,6 +736,7 @@
       <p class="sub" style="margin-top:-8px;">Godziny pracy i długość dyżuru ustawia się osobno dla każdego działu w panelu „Działy”. Możesz też zmienić godziny pojedynczego dnia klikając ✎ przy jego nagłówku.</p>
 
       <div id="deptNavWrap"></div>
+      <div id="conflictBannerWrap"></div>
 
       <div id="grafikWrap">
         <div class="grafik-empty">Dodaj działy w panelu obok, ustaw zakres dat i kliknij „Zbuduj grafik”.</div>
@@ -1346,17 +1387,87 @@
     }
   });
 
+  // ---------- WYKRYWANIE KOLIZJI ----------
+  // Zwraca listę {deptId, deptName, date, start, end} innych dyżurów (w innych działach)
+  // na które dany wolontariusz jest już przypisany i które nachodzą czasowo na podane okno.
+  function findConflictsFor(volId, dateStr, startTime, endTime, excludeDeptId){
+    const conflicts = [];
+    const s1 = timeToMinutes(startTime), e1 = timeToMinutes(endTime);
+    state.Działy.forEach(dept=>{
+      if(dept.id === excludeDeptId) return;
+      const day = (dept.Grafik_dzialu.Dni||[]).find(d=>d.data===dateStr);
+      if(!day) return;
+      (day.dyzury||[]).forEach(dz=>{
+        if(!(dz.wolontariusze||[]).includes(volId)) return;
+        const s2 = timeToMinutes(dz.start_dyzuru), e2 = timeToMinutes(dz.koniec_dyzuru);
+        if(s1 < e2 && s2 < e1){
+          conflicts.push({deptId:dept.id, deptName:dept.nazwa, date:dateStr, start:dz.start_dyzuru, end:dz.koniec_dyzuru});
+        }
+      });
+    });
+    return conflicts;
+  }
+
+  // Sprawdza, czy dany wolontariusz ma kolizję na danym dyżurze (biorąc pod uwagę WSZYSTKIE działy,
+  // w tym ten bieżący — jeśli ktoś jest przypisany do dwóch dyżurów w TYM SAMYM dziale nachodzących
+  // na siebie czasowo, to też jest liczone jako kolizja).
+  function volunteerHasConflict(volId, dateStr, startTime, endTime, ownDeptId, ownDyzurId){
+    const s1 = timeToMinutes(startTime), e1 = timeToMinutes(endTime);
+    for(const dept of state.Działy){
+      const day = (dept.Grafik_dzialu.Dni||[]).find(d=>d.data===dateStr);
+      if(!day) continue;
+      for(const dz of (day.dyzury||[])){
+        if(dept.id===ownDeptId && dz.id_dyzuru===ownDyzurId) continue; // to jest ten sam dyżur
+        if(!(dz.wolontariusze||[]).includes(volId)) continue;
+        const s2 = timeToMinutes(dz.start_dyzuru), e2 = timeToMinutes(dz.koniec_dyzuru);
+        if(s1 < e2 && s2 < e1) return true;
+      }
+    }
+    return false;
+  }
+
+  // Zlicza wszystkie kolizje w całym grafiku (dla danego działu lub globalnie).
+  function countConflicts(deptFilter){
+    let count = 0;
+    const seen = new Set();
+    state.Działy.forEach(dept=>{
+      if(deptFilter && dept.id!==deptFilter) return;
+      (dept.Grafik_dzialu.Dni||[]).forEach(day=>{
+        (day.dyzury||[]).forEach(dz=>{
+          (dz.wolontariusze||[]).forEach(vid=>{
+            if(volunteerHasConflict(vid, day.data, dz.start_dyzuru, dz.koniec_dyzuru, dept.id, dz.id_dyzuru)){
+              const key = dept.id+"|"+day.data+"|"+dz.id_dyzuru+"|"+vid;
+              if(!seen.has(key)){ seen.add(key); count++; }
+            }
+          });
+        });
+      });
+    });
+    return count;
+  }
+
+  function renderConflictBanner(){
+    const wrap = document.getElementById("conflictBannerWrap");
+    if(!wrap) return;
+    const dept = state.Działy.find(d=>d.id===currentDeptId);
+    const deptConflicts = dept ? countConflicts(dept.id) : 0;
+    if(deptConflicts===0){ wrap.innerHTML = ""; return; }
+    wrap.innerHTML = `<div class="conflict-banner">⚠ Wykryto kolizje grafiku w tym dziale <span class="cnt">${deptConflicts}</span> — ta sama osoba ma w tym samym czasie dyżur w innym dziale (oznaczone na czerwono poniżej).</div>`;
+  }
+
   function renderGrafik(){
     renderDeptNav();
     const wrap = document.getElementById("grafikWrap");
     if(state.Działy.length===0){
       wrap.innerHTML = '<div class="grafik-empty">Najpierw utwórz co najmniej jeden dział.</div>';
+      renderConflictBanner();
       return;
     }
     const dept = state.Działy.find(d=>d.id===currentDeptId) || state.Działy[0];
     const dni = dept.Grafik_dzialu.Dni || [];
     if(dni.length===0){
       wrap.innerHTML = '<div class="grafik-empty">Ustaw zakres dat i godziny, po czym kliknij „Zbuduj grafik”.</div>';
+      renderConflictBanner();
       return;
     }
     let thead = '<tr>';
@@ -1382,9 +1493,17 @@
         slotHtml = '<div class="empty-note" style="padding:4px 0;">brak godzin</div>';
       } else {
         slotHtml = dyzury.map(dz=>{
-          const tiles = (dz.wolontariusze||[]).map(vid=>
-            `<div class="tile"><span>${escapeHtml(volunteerName(vid))}</span><button class="rm" data-dept="${dept.id}" data-day="${day.data}" data-dyzur="${dz.id_dyzuru}" data-vol="${vid}" title="Usuń">✕</button></div>`
-          ).join("");
+          const tiles = (dz.wolontariusze||[]).map(vid=>{
+            const conflicts = findConflictsFor(vid, day.data, dz.start_dyzuru, dz.koniec_dyzuru, dept.id);
+            const isConflict = conflicts.length>0;
+            const title = isConflict
+              ? `Kolizja: ${conflicts.map(c=>`${c.deptName} (${c.start}–${c.end})`).join(", ")}`
+              : "";
+            return `<div class="tile${isConflict?' conflict':''}" ${isConflict?`title="${escapeHtml(title)}"`:''}>
+                <span>${isConflict?'<span class="conflict-flag">⚠</span>':''}${escapeHtml(volunteerName(vid))}</span>
+                <button class="rm" data-dept="${dept.id}" data-day="${day.data}" data-dyzur="${dz.id_dyzuru}" data-vol="${vid}" title="Usuń">✕</button>
+              </div>`;
+          }).join("");
           return `<div class="slot-block">
               <div class="slot-label">${dz.start_dyzuru}–${dz.koniec_dyzuru}</div>
               ${tiles}
@@ -1397,6 +1516,7 @@
     tbody += "</tr>";
 
     wrap.innerHTML = `<div style="overflow-x:auto;"><table class="grafik"><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>`;
+    renderConflictBanner();
   }
 
   function findDyzur(deptId, dateStr, dyzurId){
@@ -1447,12 +1567,17 @@
       body.innerHTML = '<div class="empty-note">Wszyscy członkowie działu są już przypisani do tego dyżuru.</div>';
     } else {
       const hours = computeHours();
-      body.innerHTML = candidates.map(id=>
-        `<button class="opt" data-dept="${deptId}" data-day="${dateStr}" data-dyzur="${dyzurId}" data-vol="${id}">
-           <span>${escapeHtml(volunteerName(id))}</span>
+      body.innerHTML = candidates.map(id=>{
+        const conflicts = findConflictsFor(id, dateStr, dz.start_dyzuru, dz.koniec_dyzuru, deptId);
+        const isConflict = conflicts.length>0;
+        const note = isConflict
+          ? `<span class="opt-conflict-note">⚠ kolizja: ${escapeHtml(conflicts.map(c=>`${c.deptName} ${c.start}–${c.end}`).join(", "))}</span>`
+          : "";
+        return `<button class="opt${isConflict?' opt-conflict':''}" data-dept="${deptId}" data-day="${dateStr}" data-dyzur="${dyzurId}" data-vol="${id}">
+           <span>${isConflict?'⚠ ':''}${escapeHtml(volunteerName(id))}${note}</span>
            <span class="opt-hours">${formatHours(hours[id]||0)}</span>
-         </button>`
-      ).join("");
+         </button>`;
+      }).join("");
     }
     dialog.showModal();
   }
@@ -1462,8 +1587,16 @@
     if(!opt) return;
     const {dz} = findDyzur(opt.dataset.dept, opt.dataset.day, opt.dataset.dyzur);
     if(dz){
+      const volId = opt.dataset.vol;
+      const conflicts = findConflictsFor(volId, opt.dataset.day, dz.start_dyzuru, dz.koniec_dyzuru, opt.dataset.dept);
+      if(conflicts.length>0){
+        const msg = "Ta osoba ma już dyżur w tym samym czasie w: " +
+          conflicts.map(c=>`${c.deptName} (${c.start}–${c.end})`).join(", ") +
+          ".\n\nCzy mimo to przypisać ją do tego dyżuru?";
+        if(!confirm(msg)) return;
+      }
       dz.wolontariusze = dz.wolontariusze || [];
-      dz.wolontariusze.push(opt.dataset.vol);
+      dz.wolontariusze.push(volId);
     }
     dialog.close();
     renderGrafik();
