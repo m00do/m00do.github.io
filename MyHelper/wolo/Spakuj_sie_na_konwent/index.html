@@ -90,7 +90,7 @@ console.assert(clean({title:1,groups:[{name:'a',items:['x',' ']}]}).groups[0].it
 /* szablon wg listy konwentowej; o = zaznaczone opcje */
 function build(n,r,sl,o){const g=[],G=(name,items)=>g.push({name,items}),h=x=>o.includes(x);
  G('Dokumenty i pieniądze',['Dowód osobisty',...(h('min')?['Zgoda opiekuna prawnego (dla niepełnoletnich)']:[]),'Legitymacja szkolna / studencka','Bilet na wydarzenie',h('car')?'Prawo jazdy i dowód rejestracyjny':'Bilet na pociąg / autobus / samolot','Pieniądze (gotówka)','Karta płatnicza']);
- G('Ubrania',['Koszulki / sukienki ×'+n,'Spodnie / spódnice ×'+Math.ceil(n/2),'Bielizna ×'+n,'Skarpetki ×'+n,'Kurtka / bluza','Buty (wygodne!)','Coś na głowę (czapka, kapelusz, chusta)']);
+ G('Ubrania',['Koszulki ×'+n,'Spodnie / spódnice ×'+Math.ceil(n/2),'Bielizna ×'+n,'Skarpetki ×'+n,'Kurtka / bluza','Buty (wygodne!)','Coś na głowę (czapka, kapelusz, chusta)']);
  G('Elektronika',['Telefon','Ładowarka do telefonu','Powerbank','Słuchawki','Głośnik',...(h('cam')?['Aparat / kamera (+ ładowarka, obiektywy)']:[])]);
  if(h('cos'))G('Dla cosplayerów',['Cosplay','Czepek pod perukę','Zestaw do szycia','Pistolet z klejem na gorąco','Agrafki']);
  G('Zdrowie i higiena',['Apteczka (plastry, bandaże)','Leki stałe przyjmowane','Tabletki przeciwbólowe','Leki na biegunkę','Węgiel aktywny','Podpaski / tampony','Mydło / żel pod prysznic','Szczoteczka i pasta do zębów','Szampon / suchy szampon','Dezodorant','Żel antybakteryjny','Chusteczki (suche i mokre)']);
