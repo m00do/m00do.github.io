@@ -84,13 +84,13 @@ console.assert(clean({title:1,groups:[{name:'a',items:['x',' ']}]}).groups[0].it
 /* szablon wg listy konwentowej; o = zaznaczone opcje */
 function build(n,r,sl,o){const g=[],G=(name,items)=>g.push({name,items}),h=x=>o.includes(x);
  G('Dokumenty i pieniądze',['Dowód osobisty',...(h('min')?['Zgoda opiekuna prawnego (dla niepełnoletnich)']:[]),'Legitymacja szkolna / studencka','Bilet na wydarzenie',h('car')?'Prawo jazdy i dowód rejestracyjny':'Bilet na pociąg / autobus / samolot','Pieniądze (gotówka)','Karta płatnicza']);
- G('Ubrania',['Koszulki / sukienki ×'+n,'Spodnie / spódnice ×'+Math.ceil(n/2),'Bielizna ×'+n,'Skarpetki ×'+n,'Kurtka / bluza','Buty (wygodne!)','Coś na głowę (czapka, kapelusz, chusta)']);
+ G('Ubrania',['Koszulki ×'+n,'Spodnie ×'+Math.ceil(n/2),'Bielizna ×'+n,'Skarpetki ×'+n,'Kurtka / bluza','Buty (wygodne!)','Coś na głowę (czapka, kapelusz, chusta)']);
  G('Elektronika',['Telefon','Ładowarka do telefonu','Powerbank','Słuchawki','Głośnik',...(h('cam')?['Aparat / kamera (+ ładowarka, obiektywy)']:[])]);
  if(h('cos'))G('Dla cosplayerów',['Cosplay','Czepek pod perukę','Zestaw do szycia','Pistolet z klejem na gorąco','Agrafki']);
  G('Zdrowie i higiena',['Apteczka (plastry, bandaże)','Leki stałe przyjmowane','Tabletki przeciwbólowe','Leki na biegunkę','Węgiel aktywny','Podpaski / tampony','Mydło / żel pod prysznic','Szczoteczka i pasta do zębów','Szampon / suchy szampon','Dezodorant','Żel antybakteryjny','Chusteczki (suche i mokre)']);
  if(h('sun')||h('rain'))G('Zależne od pogody',[...(h('sun')?['Krem z filtrem UV','Okulary przeciwsłoneczne','Wachlarz']:[]),...(h('rain')?['Parasol','Kurtka / płaszcz przeciwdeszczowy']:[])]);
  if(sl!='d')G('Zależne od noclegu',sl=='h'?['Potwierdzenie rezerwacji','Ręcznik','Klapki','Stopery do uszu']:[...(sl=='t'?['Namiot']:[]),'Śpiwór','Karimata / materac','Poduszka','Ręcznik','Klapki','Stopery do uszu','Opaska na oczy']);
- if(r=='w')G('Wolontariat',['Identyfikator / koszulka wolontariusza','Grafik zmian','Kontakt do koordynatora','Przekąski na zmianę']);
+ if(r=='w')G('Wolontariat',['Grafik zmian','Kontakt do koordynatora','Przekąski na zmianę']);
  if(r=='e')G('Stoisko',['Potwierdzenie wystawcy','Materiały promocyjne','Wizytówki','Baner / roll-up','Przedłużacz i listwa','Nożyczki, opaski zaciskowe','Terminal płatniczy i drobne','Towar / próbki']);
  if(h('car'))G('Auto',['Ubezpieczenie OC','Parking / przepustka','Nawigacja']);
  G('Inne',['Plecak / torba na zakupy','Jedzenie (np. suchy prowiant)','Woda (najlepiej w butelce z filtrem)','Coś do pisania (długopis, ołówek, marker)','Zeszyt','Taśma klejąca']);
