@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MyHelper – Program creator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--ink:#14201a;--muted:#6b756f;--line:#e4e2d9;--line-soft:#e4e2d9;--sb:#ecebe4;--panel:#fff;--paper:#fff;--gd:#1f4d38;--green:#1f4d38;--g:#2d5a43;--gt:#e1ebe5;--o:#d97a2b;--clay:#c2531a;--clay-soft:#fbe9d8;--amber:#d97a2b;--amber-soft:#e1ebe5;--blue:#2d5a43;--radius:16px;--radius-sm:12px;--font-body:system-ui,-apple-system,"Segoe UI",sans-serif;--font-display:var(--font-body);--font-mono:ui-monospace,Menlo,monospace;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html{background:#0b0d0c}
+body{margin:0;color:var(--ink);font:15px/1.45 var(--font-body);padding:16px}
+#bg{position:fixed;inset:0;width:100%;height:100%;image-rendering:pixelated;z-index:-1}
+/* powłoka: panel boczny + biała część główna (jak w spakuj-sie) */
+.frame{display:grid;grid-template-columns:232px minmax(0,1fr);gap:0 12px;max-width:1500px;margin:0 auto;background:var(--sb);border-radius:24px;padding:12px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+main:has(>.stepper){display:contents}
+.stepper,.side{grid-column:1;grid-row:1/span 6;align-self:start;position:sticky;top:12px;display:flex;flex-direction:column;gap:6px;padding:6px;max-height:calc(100vh - 56px);overflow:auto}
+header.top,.dni-bar,.content-col,main,.app-footer{background:#fff;min-width:0}
+header.top{grid-column:2;grid-row:1;border-radius:18px 18px 0 0;padding:18px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header.top h1{margin:0;font-size:1.4rem;font-weight:700}
+header.top .tag{display:block;font-size:.82rem;color:var(--muted)}
+header.top .tag:before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:#3aa86b;margin-right:6px}
+header.top .actions,header.top>div:last-child{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.dni-bar{grid-column:2;grid-row:2;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:14px 20px;border-bottom:1px solid var(--line)}
+.content-col{grid-column:2;grid-row:2;padding:20px;display:flex;flex-direction:column}
+main{grid-column:2;grid-row:3;display:flex;flex-direction:column}
+.app-footer{grid-column:2;grid-row:4;border-radius:0 0 18px 18px;border-top:1px solid var(--line);padding:14px 20px}
+.content-col~.app-footer,main:has(>.stepper)~.app-footer{grid-row:3}
+.footer-note{margin:0;font-size:.75rem;color:var(--muted);text-align:left}.app-footer{display:flex;flex-direction:column;gap:4px}.lnk{font:inherit;background:none;border:0;padding:0;color:var(--gd);text-decoration:underline;cursor:pointer}
+/* nawigacja boczna */
+.logo{font-weight:800;display:flex;align-items:center;gap:10px;padding:6px 6px 10px;font-size:1.05rem}
+.logo i{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--gd) 55%,var(--o) 55%)}
+.lb{font-size:.7rem;letter-spacing:.08em;color:var(--muted);padding:10px 12px 2px;text-transform:uppercase}
+.nv,.step-btn{font:inherit;background:none;border:0;text-align:left;padding:8px 12px;border-radius:10px;color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:10px;text-decoration:none}
+.nv:hover,.step-btn:hover{background:#e2e0d6}.step-btn.active{background:#fff;font-weight:600;color:var(--gd)}
+.step-num{width:22px;height:22px;border-radius:50%;background:var(--gt);color:var(--gd);display:grid;place-items:center;font-size:.75rem;font-weight:700}
+/* panele (grafik) */
+.grid-3{display:block;width:100%}
+.grid-3>section.panel{display:none;width:70%;min-width:320px;max-width:100%}
+.grid-3>section.panel.active-panel{display:block}
+#Panel_Grafiku.active-panel{width:100%;max-width:none}
+section.panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+section.panel h2{font-size:1.2rem;font-weight:700;margin:0 0 4px;display:flex;align-items:center;gap:8px}
+section.panel h2 .num{font-size:.75rem;color:#fff;background:var(--gd);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+.sub{font-size:.82rem;color:var(--muted);margin:0 0 14px}
+.step-controls{display:flex;justify-content:space-between;margin-top:22px}
+/* formularze i przyciski */
+label.field-label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 5px;font-weight:600}
+input[type=text],input[type=date],input[type=time],input[type=number],textarea,select{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit;background:#fff;color:var(--ink)}
+textarea{resize:vertical;min-height:64px}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--gt);border-color:var(--g)}
+::placeholder{color:#9aa39d}
+button{font-family:inherit;cursor:pointer;border:none}
+.btn{background:var(--gd);color:#fff;padding:9px 16px;border-radius:999px;font-size:.88rem;font-weight:600;border:1px solid var(--gd);white-space:nowrap}
+.btn:hover,.btn:focus-visible{outline:2px solid var(--o);outline-offset:1px}
+.btn.secondary{background:#fff;color:var(--ink);border-color:var(--line)}
+.btn.small{padding:5px 12px;font-size:.8rem}
+.btn.ghost{background:transparent;color:var(--muted);border:1px dashed var(--g)}
+.btn.clay{background:var(--o);border-color:var(--o)}
+.row{display:flex;gap:8px;margin-top:8px}.row>*{flex:1}
+.file-drop{margin-top:10px;border:1.5px dashed var(--g);border-radius:var(--radius-sm);padding:14px;text-align:center;font-size:.85rem;color:var(--muted);cursor:pointer}
+.file-drop:hover{border-color:var(--o);background:var(--clay-soft)}.file-drop input{display:none}
+ul.plain{list-style:none;margin:12px 0 0;padding:0}
+.volunteer-chip,.item-card,.dept-card{display:flex;border:1px solid var(--line);border-radius:var(--radius-sm);background:#fff}
+.volunteer-chip{align-items:center;justify-content:space-between;gap:8px;padding:7px 12px;margin-bottom:7px;font-size:.92rem}
+.del,.del-punkt,.del-dzien,.volunteer-chip .del,.tile .rm,.tile .conflict-flag,.conflict-flag{color:var(--clay);background:none;padding:0 2px}
+.hours-badge,dialog .opt-hours{font-family:var(--font-mono);font-size:.7rem;color:#fff;background:var(--gd);border-radius:6px;padding:2px 7px;margin-left:4px;font-weight:700;flex:0 0 auto}
+.count-pill{font-size:.78rem;color:var(--gd);background:var(--gt);border-radius:6px;padding:2px 8px;display:inline-block;font-weight:600}
+.dept-card{display:block;padding:12px;margin-bottom:12px}
+.dept-hours{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}.dept-hours .fld{flex:1;min-width:100px}
+.dept-card .dept-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.dept-head .dept-name{font-weight:700}
+.dept-swatch{width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:7px}
+.dept-members{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.member-toggle{font-size:.82rem;padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink);font-weight:500}
+.member-toggle.on{background:var(--gd);border-color:var(--gd);color:#fff}
+.empty-note{font-size:.85rem;color:var(--muted);padding:12px 4px;text-align:center}
+/* grafik */
+.dept-nav{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.dept-nav .arrow-btn{background:#fff;border:1px solid var(--line);color:var(--ink);width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
+.dept-nav .arrow-btn:hover{background:var(--o);color:#fff}.dept-nav .arrow-btn:disabled{opacity:.35;cursor:default}
+.dept-nav .dept-pills{display:flex;gap:6px;flex-wrap:wrap}
+.dept-nav .dept-pill{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:.85rem;font-weight:600;color:var(--ink)}
+.dept-nav .dept-pill.active{color:#fff}.dept-nav .dept-pill .dept-swatch{margin-right:0}
+.grafik-toolbar{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px}.grafik-toolbar .fld{min-width:140px}
+table.grafik,table.preview,table.punkty{border-collapse:separate;border-spacing:0;width:100%;font-size:.88rem}
+table.grafik{border:1px solid var(--line);border-radius:var(--radius-sm);overflow:hidden}
+table.grafik th,table.grafik td{border:1px solid var(--line);padding:0;vertical-align:top}
+table.grafik thead th,table.preview thead th,table.punkty th{background:var(--gt);padding:9px 6px;font-size:.72rem;letter-spacing:.04em;text-transform:uppercase;color:var(--gd);font-weight:700;position:sticky;top:0}
+table.grafik thead th.day-head{text-align:center}
+table.grafik thead th.day-head .dow{display:block;font-size:.68rem;color:var(--muted);text-transform:none;letter-spacing:0}
+table.grafik tbody th{text-align:left;background:#fff;padding:10px;min-width:130px;font-weight:700}
+td.cell{min-width:120px;padding:6px!important;background:#fff}td.cell.weekend{background:#f6f5ef}
+.tile{display:flex;align-items:center;justify-content:space-between;gap:4px;font-size:.82rem;padding:4px 10px;border-radius:999px;background:var(--gt);margin-bottom:4px;font-weight:500}
+.tile.conflict{background:var(--clay-soft);box-shadow:0 0 0 1px var(--clay) inset}
+.slot-block{padding:6px;border-bottom:1px dashed var(--line)}.slot-block:last-child{border-bottom:none}
+.slot-label{font-family:var(--font-mono);font-size:.7rem;color:var(--muted);margin-bottom:4px}
+.add-tile-btn{width:100%;font-size:.78rem;color:var(--muted);background:none;border:1px dashed var(--g);border-radius:8px;padding:4px 0}
+.add-tile-btn:hover{border-color:var(--o);color:var(--o)}
+.grafik-empty{text-align:center;padding:50px 20px;color:var(--muted)}
+.conflict-banner{display:flex;align-items:center;gap:8px;background:var(--clay-soft);border:1px solid var(--clay);border-radius:var(--radius-sm);padding:10px 14px;font-size:.85rem;font-weight:600;margin-bottom:14px}
+.conflict-banner .cnt{font-size:.75rem;background:var(--clay);color:#fff;border-radius:6px;padding:2px 8px}
+.opt.opt-conflict{background:var(--clay-soft)}.opt-conflict-note{font-size:.7rem;color:var(--clay);font-weight:600;display:block;margin-top:2px}
+/* program */
+.dni-bar .dzien-pill{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:.88rem;font-weight:600;color:var(--ink)}
+.dni-bar .dzien-pill.active{background:var(--gd);border-color:var(--gd);color:#fff}.dni-bar .dzien-pill.active .del-dzien{color:#f3c9a5}
+.dni-bar .add-dzien-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:999px;border:1px dashed var(--g);background:none;color:var(--muted);font-size:.88rem;font-weight:600}
+.dni-bar .add-dzien-btn:hover{border-color:var(--o);color:var(--o)}
+.dni-bar .dni-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-right:4px}
+.preview-panel,.cols{margin:20px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;overflow:hidden}
+.preview-panel{margin-top:0}
+.preview-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);background:var(--gt);flex-wrap:wrap}
+.preview-head h2{margin:0;font-size:.95rem}
+.preview-scroll{overflow:auto;max-height:600px}
+table.preview th,table.preview td{border:1px solid var(--line);padding:8px 10px;vertical-align:middle;white-space:nowrap}
+table.preview thead tr:first-child th{top:0;z-index:3}table.preview thead tr:nth-child(2) th{top:34px}
+table.preview th.col-dni,table.preview td.col-dni{font-weight:700;color:var(--clay);background:var(--clay-soft);position:sticky;left:0;z-index:1}
+table.preview th.col-godz,table.preview td.col-godz{font-weight:600;background:#f6f5ef;position:sticky;left:90px;z-index:1}
+table.preview thead th.col-dni,table.preview thead th.col-godz{z-index:4}
+table.preview td.punkt-cell{white-space:normal;min-width:150px}.punkt-cell .p-typ{font-weight:700}.punkt-cell .p-prow{display:block;font-size:.75rem;color:var(--muted)}
+table.preview .empty-preview{padding:30px 20px;text-align:center;color:var(--muted)}
+.cols{display:flex}.col{border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0}.col:last-child{border-right:none}
+.col-bloki{flex:0 0 250px}.col-sale{flex:0 0 270px}.col-punkty{flex:1}
+.col-head{padding:14px 16px 10px;border-bottom:1px solid var(--line);background:var(--gt)}
+.col-head h2{margin:0 0 2px;font-size:.95rem}.col-head .sub{margin:0;font-size:.75rem}
+.col-body{flex:1;overflow-y:auto;padding:12px}.col-foot{padding:10px 12px;border-top:1px solid var(--line)}
+.item-card{padding:12px 14px;margin-bottom:10px;cursor:pointer;align-items:center;justify-content:space-between;gap:8px}
+.item-card:hover{border-color:var(--g)}.item-card.active{border-color:var(--g);box-shadow:0 0 0 2px var(--g) inset;background:var(--gt)}
+.item-card .name{font-weight:700}.item-card .meta{font-size:.75rem;color:var(--muted);font-family:var(--font-mono)}
+.add-plus-btn{width:100%;border:1px dashed var(--g);border-radius:var(--radius-sm);background:none;color:var(--muted);font-size:1.4rem;font-weight:700;padding:12px;display:flex;align-items:center;justify-content:center;gap:8px}
+.add-plus-btn:hover{border-color:var(--o);color:var(--o)}.add-plus-btn .lbl{font-size:.82rem;font-weight:600}
+.punkty-toolbar{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.punkty-toolbar .sala-title{font-size:1.05rem;font-weight:700}.sala-title .num{font-size:.75rem;color:var(--muted);font-weight:400;margin-left:6px}
+table.punkty th{text-align:left;padding:9px 10px}table.punkty td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.punkty tr:hover td{background:#f6f5ef}
+.typ-pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.78rem;font-weight:600;background:var(--clay-soft);color:var(--clay)}
+/* okna dialogowe */
+dialog{border:1px solid var(--line);border-radius:var(--radius);padding:0;box-shadow:0 20px 60px rgba(0,0,0,.45);width:min(340px,calc(100vw - 40px));color:var(--ink)}
+dialog::backdrop{background:rgba(11,13,12,.55)}
+dialog .dh{padding:14px 16px;border-bottom:1px solid var(--line);font-weight:700}.dialog .db,dialog .db{padding:12px 16px 16px}
+dialog .opt{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;padding:8px 10px;border-radius:8px;background:none;margin-bottom:3px;font-weight:500;color:var(--ink)}
+dialog .opt:hover{background:var(--gt)}dialog .close-row{display:flex;justify-content:flex-end;padding:0 16px 12px}
+@media(max-width:900px){body{padding:8px}.frame{display:flex;flex-direction:column;padding:8px;border-radius:18px;gap:0}
+.stepper,.side{order:-1;position:static;flex-direction:row;flex-wrap:wrap;align-items:center;max-height:none}.stepper .lb,.side .lb
+.cols{flex-direction:column;margin:12px}.col{border-right:none;border-bottom:1px solid var(--line)}.col-bloki,.col-sale{flex:0 0 auto;max-height:340px}
+.row,.grafik-toolbar{flex-direction:column;align-items:stretch}.grid-3>section.panel{width:100%;min-width:0}.step-controls .btn{flex:1}}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div class="frame">
+  <aside class="side">
+    <div class="logo"><i></i>MyHelper</div><div class="lb">Program</div>
+    <a class="nv" href="#dniBar">Dni</a><a class="nv" href="#cols">Bloki, sale i punkty</a><a class="nv" href="#previewPanel">Podgląd tabeli</a>
+  </aside>
+  <header class="top">
+    <div>
+      <h1>Program creator</h1>
+      <span class="tag">Dni &middot; Bloki (wspólne) &middot; Sale &middot; Punkty programu</span>
+    </div>
+    <div class="actions">
+      <button class="btn secondary small" id="exportJsonBtn">⬇ Zapisz do pliku (.json)</button>
+      <button class="btn secondary small" id="importJsonBtn">⬆ Wczytaj plik (.json)</button>
+      <input type="file" id="importJsonInput" accept=".json" style="display:none;">
+      <button class="btn secondary small" id="exportXlsxBtn">⬇ Excel (.xlsx)</button>
+      <button class="btn small" id="saveBtn">zapisz program</button>
+    </div>
+  </header>
+
+  <div class="dni-bar" id="dniBar"></div>
+
+  <main>
+    <div class="cols" id="cols">
+
+      <!-- KOLUMNA 1: BLOKI -->
+      <div class="col col-bloki">
+        <div class="col-head">
+          <h2>Bloki</h2>
+          <p class="sub">Wspólne dla wszystkich dni — wybierz lub utwórz blok programowy</p>
+        </div>
+        <div class="col-body" id="blokiList"></div>
+        <div class="col-foot">
+          <button class="add-plus-btn" id="addBlokBtn">+ <span class="lbl">Nowy blok</span></button>
+          <button class="btn secondary small" id="importBlokBtn" style="width:100%; margin-top:8px;">⬆ Wczytaj blok (.json)</button>
+          <input type="file" id="importBlokInput" accept=".json" style="display:none;">
+        </div>
+      </div>
+
+      <!-- KOLUMNA 2: SALE -->
+      <div class="col col-sale">
+        <div class="col-head">
+          <h2>Sale</h2>
+          <p class="sub" id="saleSub">Wybierz blok, aby zobaczyć sale</p>
+        </div>
+        <div class="col-body" id="saleList"></div>
+        <div class="col-foot">
+          <button class="add-plus-btn" id="addSalaBtn">+ <span class="lbl">Nowa sala</span></button>
+        </div>
+      </div>
+
+      <!-- KOLUMNA 3: PUNKTY PROGRAMU -->
+      <div class="col col-punkty">
+        <div class="punkty-toolbar" id="punktyToolbar">
+          <div class="sala-title" id="salaTitle">Wybierz salę</div>
+          <button class="btn" id="addPunktBtn" style="display:none;">+ Dodaj punkt programu</button>
+        </div>
+        <div class="col-body" id="punktyBody" style="padding:0;"></div>
+      </div>
+
+    </div>
+
+    <div class="preview-panel" id="previewPanel">
+      <div class="preview-head">
+        <h2>Podgląd tabeli programu</h2>
+        <button class="btn secondary small" id="copyPreviewBtn">⧉ Kopiuj tabelę (Excel/Google Sheets)</button>
+      </div>
+      <div class="preview-scroll" id="previewWrap"></div>
+    </div>
+  </main>
+
+  <footer class="app-footer">
+  <p class="footer-note">Wydawca: inicjatywa MyHelper. Narzędzie ma charakter pomocniczy i informacyjny – przed publikacją sprawdź poprawność programu, korzystasz na własną odpowiedzialność.</p>
+  <p class="footer-note">Prywatność: aplikacja nie ma kont ani analityki i nie wysyła Twoich danych na serwer. Dane mogą być zapisywane wyłącznie w Twojej przeglądarce (localStorage), za Twoją zgodą. <button class="lnk" data-ck>Ustawienia pamięci</button></p>
+</footer>
+</div>
+
+<!-- DIALOG: nowy/edycja dzień -->
+<dialog id="dzienDialog">
+  <div class="dh" id="dzienDialogTitle">Nowy dzień</div>
+  <div class="db">
+    <label class="field-label" style="margin-top:0;">Data dnia</label>
+    <input type="date" id="dzienDateInput">
+    <label class="field-label">Nazwa dnia (opcjonalnie)</label>
+    <input type="text" id="dzienNameInput" placeholder="np. Piątek">
+    <div class="row" style="margin-top:16px;">
+      <button class="btn" id="dzienSaveBtn" style="flex:0 0 auto;">Zapisz</button>
+      <button class="btn secondary" id="dzienCancelBtn" style="flex:0 0 auto;">Anuluj</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- DIALOG: nowy/edycja blok -->
+<dialog id="blokDialog">
+  <div class="dh" id="blokDialogTitle">Nowy blok</div>
+  <div class="db">
+    <label class="field-label" style="margin-top:0;">Nazwa bloku</label>
+    <input type="text" id="blokNameInput" placeholder="np. Blok horroru i grozy">
+    <div class="row" style="margin-top:16px;">
+      <button class="btn" id="blokSaveBtn" style="flex:0 0 auto;">Zapisz</button>
+      <button class="btn secondary" id="blokCancelBtn" style="flex:0 0 auto;">Anuluj</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- DIALOG: nowa/edycja sala -->
+<dialog id="salaDialog">
+  <div class="dh" id="salaDialogTitle">Nowa sala</div>
+  <div class="db">
+    <label class="field-label" style="margin-top:0;">Nazwa sali</label>
+    <input type="text" id="salaNameInput" placeholder="np. Sala Główna">
+    <label class="field-label">Numer sali</label>
+    <input type="text" id="salaNrInput" placeholder="np. 101">
+    <div class="row" style="margin-top:16px;">
+      <button class="btn" id="salaSaveBtn" style="flex:0 0 auto;">Zapisz</button>
+      <button class="btn secondary" id="salaCancelBtn" style="flex:0 0 auto;">Anuluj</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- DIALOG: nowy/edycja punkt programu -->
+<dialog id="punktDialog">
+  <div class="dh" id="punktDialogTitle">Nowy punkt programu</div>
+  <div class="db">
+    <label class="field-label" style="margin-top:0;">Dzień</label>
+    <select id="punktDzienInput"></select>
+    <div class="row" style="margin-top:8px;">
+      <div>
+        <label class="field-label" style="margin-top:0;">Start</label>
+        <input type="time" id="punktStartInput">
+      </div>
+      <div>
+        <label class="field-label" style="margin-top:0;">Koniec</label>
+        <input type="time" id="punktEndInput">
+      </div>
+    </div>
+    <label class="field-label">Typ punktu programu</label>
+    <input type="text" id="punktTypInput" placeholder="np. Prelekcja, Warsztat, Panel...">
+    <label class="field-label">Prowadzący</label>
+    <input type="text" id="punktProwadzacyInput" placeholder="np. Anna Kowalska">
+    <div class="row" style="margin-top:16px;">
+      <button class="btn" id="punktSaveBtn" style="flex:0 0 auto;">Zapisz</button>
+      <button class="btn secondary" id="punktCancelBtn" style="flex:0 0 auto;">Anuluj</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- DIALOG: potwierdzenie usunięcia -->
+<dialog id="confirmDialog">
+  <div class="dh" id="confirmDialogTitle">Potwierdź</div>
+  <div class="db">
+    <p id="confirmDialogText" style="margin:0 0 14px; font-size:13.5px;"></p>
+    <div class="row" style="margin-top:0;">
+      <button class="btn secondary" id="confirmDialogNo" style="flex:1;">Anuluj</button>
+      <button class="btn clay" id="confirmDialogYes" style="flex:1;">Usuń</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="ck" style="width:min(460px,calc(100vw - 40px))"><div class="dh">Pamięć przeglądarki (localStorage)</div><div class="db">
+<p style="margin:0 0 14px;color:var(--muted);font-size:.9rem">Czy możemy zapisywać Twoje dane w tej przeglądarce (localStorage)? Dzięki temu nie stracisz postępu po odświeżeniu strony. Nic nie wysyłamy na serwer. Bez zgody aplikacja działa, ale dane znikną po odświeżeniu, więc zapisuj je do pliku .json. Dane możesz usunąć w ustawieniach przeglądarki, a zgodę zmienić w stopce.</p>
+<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-k="1">Zgadzam się</button><button class="btn secondary" data-k="0">Nie, dziękuję</button></div></div></dialog>
+<script>
+(function(){
+  "use strict";
+
+  const STORAGE_KEY = "program_creator_state_v3";
+
+  // Struktura zgodna z:
+  // Dni: [ { nazwa_dnia } ]
+  // Program: [ { nazwa_bloku, Sale: [ { nazwa_sali, nr_sali, Punkty_programu: [ {dzien, start, koniec, typ, prowadzący} ] } ] } ]
+  // Bloki i Sale są wspólne dla wszystkich dni — tylko punkty programu są przypisane do konkretnego dnia.
+  let state = { Dni: [], Program: [] };
+
+  let currentDzienIdx = null;   // który dzień jest aktualnie wybrany (filtruje widok punktów programu)
+  let currentBlokIdx = null;
+  let currentSalaIdx = null;
+
+  function uid(){ return Math.random().toString(36).slice(2,10); }
+
+  function currentDzienId(){
+    if(currentDzienIdx===null || !state.Dni[currentDzienIdx]) return null;
+    return state.Dni[currentDzienIdx].id;
+  }
+
+  let ok;try{ok=localStorage.getItem('consent')}catch(e){}
+  (function(){ // zgoda na localStorage: bez zgody nic nie jest czytane ani zapisywane
+    const ck=document.getElementById('ck');let first=ok==null;
+    if(first)ck.showModal();
+    ck.oncancel=e=>{if(first)e.preventDefault()};
+    ck.onclick=e=>{const v=e.target.dataset.k;if(v==null)return;ok=v;
+      try{localStorage.setItem('consent',v);if(v!=='1')[STORAGE_KEY,'program_creator_state_v2','program_creator_state_v1'].forEach(k=>localStorage.removeItem(k))}catch(x){}
+      ck.close();const f=first;first=false;if(v==='1'){f?location.reload():save()}};
+    document.querySelectorAll('[data-ck]').forEach(b=>b.onclick=()=>ck.showModal());
+  })();
+  function save(){
+    try{ if(ok==='1') localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+  }
+  function load(){
+    try{
+      if(ok!=='1') return;
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        const parsed = JSON.parse(raw);
+        if(parsed && Array.isArray(parsed.Dni) && Array.isArray(parsed.Program)){
+          state = normalizeState(parsed);
+          return;
+        }
+      }
+      // migracja ze starszej wersji v2 (bloki zagnieżdżone osobno w każdym dniu)
+      const v2Raw = localStorage.getItem("program_creator_state_v2");
+      if(v2Raw){
+        const v2 = JSON.parse(v2Raw);
+        if(v2 && Array.isArray(v2.Dni)){
+          state = migrateFromV2(v2);
+          return;
+        }
+      }
+      // migracja ze starszej wersji v1 (płaski Program, bez dni)
+      const v1Raw = localStorage.getItem("program_creator_state_v1");
+      if(v1Raw){
+        const v1 = JSON.parse(v1Raw);
+        if(v1 && Array.isArray(v1.Program) && v1.Program.length){
+          const dzienId = uid();
+          state = normalizeState({
+            Dni: [ { id: dzienId, nazwa_dnia: "Dzień 1" } ],
+            Program: v1.Program.map(blok=>({
+              ...blok,
+              Sale: (blok.Sale||[]).map(sala=>({
+                ...sala,
+                Punkty_programu: (sala.Punkty_programu||[]).map(p=>({ ...p, dzien: dzienId }))
+              }))
+            }))
+          });
+        }
+      }
+    }catch(e){}
+  }
+  // migracja v2: każdy dzień miał własną, zduplikowaną kopię bloków/sal.
+  // Scalamy bloki o tej samej nazwie w jeden wspólny blok, a punkty programu oznaczamy dniem, z którego pochodziły.
+  function migrateFromV2(v2){
+    const dni = v2.Dni.map(d=>({ id: d.id || uid(), nazwa_dnia: d.nazwa_dnia || d.nazwa || "" }));
+    const program = [];
+    function findOrCreateBlok(nazwa){
+      let b = program.find(b=>b.nazwa_bloku===nazwa);
+      if(!b){ b = { id: uid(), nazwa_bloku: nazwa, Sale: [] }; program.push(b); }
+      return b;
+    }
+    v2.Dni.forEach((d, di)=>{
+      const dzienId = dni[di].id;
+      (d.Program||[]).forEach(blok=>{
+        const b = findOrCreateBlok(blok.nazwa_bloku || "");
+        (blok.Sale||[]).forEach(sala=>{
+          let s = b.Sale.find(s=>s.nazwa_sali===sala.nazwa_sali && s.nr_sali===sala.nr_sali);
+          if(!s){ s = { id: uid(), nazwa_sali: sala.nazwa_sali || "", nr_sali: sala.nr_sali || "", Punkty_programu: [] }; b.Sale.push(s); }
+          (sala.Punkty_programu||[]).forEach(p=>{
+            s.Punkty_programu.push({ id: uid(), dzien: dzienId, start: p.start||"", koniec: p.koniec||"", typ: p.typ||"", prowadzący: p.prowadzący||"" });
+          });
+        });
+      });
+    });
+    return normalizeState({ Dni: dni, Program: program });
+  }
+
+  function normalizeBlok(blok){
+    return {
+      id: blok.id || uid(),
+      nazwa_bloku: blok.nazwa_bloku || "",
+      Sale: (blok.Sale||[]).map(sala=>({
+        id: sala.id || uid(),
+        nazwa_sali: sala.nazwa_sali || "",
+        nr_sali: sala.nr_sali || "",
+        Punkty_programu: (sala.Punkty_programu||[]).map(p=>({
+          id: p.id || uid(),
+          dzien: p.dzien || null,
+          start: p.start || "",
+          koniec: p.koniec || "",
+          typ: p.typ || "",
+          prowadzący: p.prowadzący || ""
+        }))
+      }))
+    };
+  }
+  const RE_DATA = /\s*\(?(\d{4}-\d{2}-\d{2}|\d{1,2}\.\d{1,2}\.\d{4})\)?\s*/;
+  function parseDate(s){
+    s = String(s||"");
+    let m = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if(m) return m[0];
+    m = s.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+    return m ? `${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}` : "";
+  }
+  function normalizeDzien(dzien){
+    let nazwa = dzien.nazwa_dnia || dzien.nazwa || "";
+    const data = dzien.data || parseDate(nazwa);
+    if(data) nazwa = nazwa.replace(RE_DATA, " ").trim();
+    return { id: dzien.id || uid(), nazwa_dnia: nazwa, data };
+  }
+  // etykieta dnia = "Nazwa (DD.MM.RRRR)" — serwer rozpoznaje z niej prawdziwą datę
+  function dzienLabel(d){
+    const dt = d.data ? d.data.split("-").reverse().join(".") : "";
+    return d.nazwa_dnia ? (dt ? `${d.nazwa_dnia} (${dt})` : d.nazwa_dnia) : dt;
+  }
+  function normalizeState(parsed){
+    return {
+      Dni: (parsed.Dni||[]).map(normalizeDzien),
+      Program: (parsed.Program||[]).map(normalizeBlok)
+    };
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function dzienName(id){
+    const d = state.Dni.find(d=>d.id===id);
+    return d ? dzienLabel(d) : "(brak dnia)";
+  }
+
+  // liczy punkty programu przypisane do danego dnia w całym programie (do metadanych/liczników)
+  function countPunktyForDzien(dzienId){
+    let c = 0;
+    state.Program.forEach(blok=>blok.Sale.forEach(sala=>{
+      c += sala.Punkty_programu.filter(p=>p.dzien===dzienId).length;
+    }));
+    return c;
+  }
+
+  // ---------- RENDER: DNI ----------
+  function renderDni(){
+    const wrap = document.getElementById("dniBar");
+    wrap.innerHTML = '<span class="dni-label">Dni</span>';
+    state.Dni.forEach((dzien, idx)=>{
+      const pill = document.createElement("div");
+      pill.className = "dzien-pill" + (idx===currentDzienIdx ? " active" : "");
+      pill.innerHTML = `
+        <span data-goto-dzien="${idx}" style="cursor:pointer;">${escapeHtml(dzienLabel(dzien) || "(bez nazwy)")}</span>
+        <button class="del-dzien" data-edit-dzien="${idx}" title="Zmień nazwę">✎</button>
+        <button class="del-dzien" data-del-dzien="${idx}" title="Usuń dzień">✕</button>
+      `;
+      wrap.appendChild(pill);
+    });
+    const addBtn = document.createElement("button");
+    addBtn.className = "add-dzien-btn";
+    addBtn.id = "addDzienBtn";
+    addBtn.innerHTML = "+ Dodaj dzień";
+    wrap.appendChild(addBtn);
+  }
+
+  document.getElementById("dniBar").addEventListener("click", e=>{
+    if(e.target.id==="addDzienBtn"){
+      openDzienDialog(null);
+      return;
+    }
+    const goto = e.target.closest("[data-goto-dzien]");
+    if(goto){
+      currentDzienIdx = Number(goto.dataset.gotoDzien);
+      renderAll(); save();
+      return;
+    }
+    const edit = e.target.closest("[data-edit-dzien]");
+    if(edit){
+      openDzienDialog(Number(edit.dataset.editDzien));
+      return;
+    }
+    const del = e.target.closest("[data-del-dzien]");
+    if(del){
+      const idx = Number(del.dataset.delDzien);
+      const dzienId = state.Dni[idx].id;
+      const cnt = countPunktyForDzien(dzienId);
+      const warn = cnt>0 ? ` Usunięte zostanie też ${cnt} pkt. programu przypisanych do tego dnia (bloki i sale pozostaną).` : "";
+      askConfirm(`Usunąć dzień „${dzienLabel(state.Dni[idx])}”?${warn}`).then(ok=>{
+        if(!ok) return;
+        state.Program.forEach(blok=>blok.Sale.forEach(sala=>{
+          sala.Punkty_programu = sala.Punkty_programu.filter(p=>p.dzien!==dzienId);
+        }));
+        state.Dni.splice(idx,1);
+        if(currentDzienIdx===idx){ currentDzienIdx = state.Dni.length ? 0 : null; }
+        else if(currentDzienIdx>idx){ currentDzienIdx--; }
+        renderAll(); save();
+      });
+    }
+  });
+
+  const dzienDialog = document.getElementById("dzienDialog");
+  let editingDzienIdx = null;
+  function openDzienDialog(idx){
+    editingDzienIdx = idx;
+    document.getElementById("dzienDialogTitle").textContent = (idx===null) ? "Nowy dzień" : "Zmień nazwę dnia";
+    document.getElementById("dzienNameInput").value = (idx===null) ? "" : state.Dni[idx].nazwa_dnia;
+    document.getElementById("dzienDateInput").value = (idx===null) ? "" : (state.Dni[idx].data || "");
+    dzienDialog.showModal();
+    document.getElementById("dzienNameInput").focus();
+  }
+  document.getElementById("dzienCancelBtn").addEventListener("click", ()=>dzienDialog.close());
+  document.getElementById("dzienSaveBtn").addEventListener("click", ()=>{
+    const nazwa = document.getElementById("dzienNameInput").value.trim();
+    const data = document.getElementById("dzienDateInput").value;
+    if(!data){ alert("Wybierz datę dnia."); return; }
+    if(editingDzienIdx===null){
+      state.Dni.push({ id: uid(), nazwa_dnia: nazwa, data });
+      currentDzienIdx = state.Dni.length - 1;
+    } else {
+      state.Dni[editingDzienIdx].nazwa_dnia = nazwa;
+      state.Dni[editingDzienIdx].data = data;
+    }
+    dzienDialog.close();
+    renderAll(); save();
+  });
+  document.getElementById("dzienNameInput").addEventListener("keydown", e=>{
+    if(e.key==="Enter") document.getElementById("dzienSaveBtn").click();
+  });
+
+  // ---------- RENDER: BLOKI (wspólne dla wszystkich dni) ----------
+  function renderBloki(){
+    const wrap = document.getElementById("blokiList");
+    wrap.innerHTML = "";
+    if(state.Program.length===0){
+      wrap.innerHTML = '<div class="empty-note">Brak bloków — utwórz pierwszy blok poniżej.</div>';
+      return;
+    }
+    state.Program.forEach((blok, idx)=>{
+      const card = document.createElement("div");
+      card.className = "item-card" + (idx===currentBlokIdx ? " active" : "");
+      card.dataset.idx = idx;
+      card.innerHTML = `
+        <div>
+          <div class="name">${escapeHtml(blok.nazwa_bloku || "(bez nazwy)")}</div>
+          <div class="meta">${blok.Sale.length} ${blok.Sale.length===1?'sala':'sal'}</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:2px;">
+          <button class="del" data-export-blok="${idx}" title="Zapisz ten blok do pliku .json" style="color:var(--muted); font-size:13px;">⬇</button>
+          <button class="del" data-del-blok="${idx}" title="Usuń blok">✕</button>
+        </div>
+      `;
+      wrap.appendChild(card);
+    });
+  }
+
+  document.getElementById("blokiList").addEventListener("click", e=>{
+    const exp = e.target.closest("[data-export-blok]");
+    if(exp){
+      const idx = Number(exp.dataset.exportBlok);
+      exportSingleBlok(state.Program[idx]);
+      return;
+    }
+    const del = e.target.closest("[data-del-blok]");
+    if(del){
+      const idx = Number(del.dataset.delBlok);
+      askConfirm(`Usunąć blok „${state.Program[idx].nazwa_bloku}” wraz z salami i punktami programu (ze wszystkich dni)?`).then(ok=>{
+        if(!ok) return;
+        state.Program.splice(idx,1);
+        if(currentBlokIdx===idx){ currentBlokIdx=null; currentSalaIdx=null; }
+        else if(currentBlokIdx>idx){ currentBlokIdx--; }
+        renderAll(); save();
+      });
+      return;
+    }
+    const card = e.target.closest(".item-card");
+    if(card){
+      currentBlokIdx = Number(card.dataset.idx);
+      currentSalaIdx = null;
+      renderAll(); save();
+    }
+  });
+
+  // ---------- RENDER: SALE (wspólne dla wszystkich dni) ----------
+  function renderSale(){
+    const wrap = document.getElementById("saleList");
+    const sub = document.getElementById("saleSub");
+    const addBtn = document.getElementById("addSalaBtn");
+    wrap.innerHTML = "";
+
+    if(currentBlokIdx===null || !state.Program[currentBlokIdx]){
+      wrap.innerHTML = '<div class="empty-note">Najpierw wybierz blok z lewej strony.</div>';
+      sub.textContent = "Wybierz blok, aby zobaczyć sale";
+      addBtn.disabled = true;
+      addBtn.style.opacity = ".45";
+      return;
+    }
+    addBtn.disabled = false;
+    addBtn.style.opacity = "1";
+    const blok = state.Program[currentBlokIdx];
+    sub.textContent = `Blok: ${blok.nazwa_bloku || "(bez nazwy)"}`;
+
+    if(blok.Sale.length===0){
+      wrap.innerHTML = '<div class="empty-note">Brak sal — dodaj pierwszą salę poniżej.</div>';
+      return;
+    }
+    blok.Sale.forEach((sala, idx)=>{
+      const liczbaWszystkich = sala.Punkty_programu.length;
+      const card = document.createElement("div");
+      card.className = "item-card" + (idx===currentSalaIdx ? " active" : "");
+      card.dataset.idx = idx;
+      card.innerHTML = `
+        <div>
+          <div class="name">${escapeHtml(sala.nazwa_sali || "(bez nazwy)")}</div>
+          <div class="meta">nr ${escapeHtml(sala.nr_sali || "-")} &middot; ${liczbaWszystkich} pkt. łącznie</div>
+        </div>
+        <button class="del" data-del-sala="${idx}" title="Usuń salę">✕</button>
+      `;
+      wrap.appendChild(card);
+    });
+  }
+
+  document.getElementById("saleList").addEventListener("click", e=>{
+    if(currentBlokIdx===null) return;
+    const blok = state.Program[currentBlokIdx];
+    const del = e.target.closest("[data-del-sala]");
+    if(del){
+      const idx = Number(del.dataset.delSala);
+      askConfirm(`Usunąć salę „${blok.Sale[idx].nazwa_sali}” wraz z punktami programu (ze wszystkich dni)?`).then(ok=>{
+        if(!ok) return;
+        blok.Sale.splice(idx,1);
+        if(currentSalaIdx===idx){ currentSalaIdx=null; }
+        else if(currentSalaIdx>idx){ currentSalaIdx--; }
+        renderAll(); save();
+      });
+      return;
+    }
+    const card = e.target.closest(".item-card");
+    if(card){
+      currentSalaIdx = Number(card.dataset.idx);
+      renderAll(); save();
+    }
+  });
+
+  // ---------- RENDER: PUNKTY PROGRAMU (filtrowane wg wybranego dnia) ----------
+  function renderPunkty(){
+    const title = document.getElementById("salaTitle");
+    const addBtn = document.getElementById("addPunktBtn");
+    const body = document.getElementById("punktyBody");
+
+    if(currentBlokIdx===null || currentSalaIdx===null || !state.Program[currentBlokIdx] || !state.Program[currentBlokIdx].Sale[currentSalaIdx]){
+      title.textContent = "Wybierz salę";
+      addBtn.style.display = "none";
+      body.innerHTML = '<div class="empty-note" style="padding:40px 20px;">Wybierz blok i salę z lewej strony, aby zarządzać punktami programu.</div>';
+      return;
+    }
+    if(currentDzienIdx===null){
+      title.textContent = "Najpierw dodaj dzień";
+      addBtn.style.display = "none";
+      body.innerHTML = '<div class="empty-note" style="padding:40px 20px;">Dodaj co najmniej jeden dzień w pasku powyżej, aby dodawać punkty programu.</div>';
+      return;
+    }
+    const sala = state.Program[currentBlokIdx].Sale[currentSalaIdx];
+    const dzienId = currentDzienId();
+    title.innerHTML = `${escapeHtml(sala.nazwa_sali || "(bez nazwy)")} <span class="num">nr ${escapeHtml(sala.nr_sali||"-")} &middot; ${escapeHtml(dzienName(dzienId))}</span>`;
+    addBtn.style.display = "inline-block";
+
+    const punktyDnia = sala.Punkty_programu
+      .map((p, idx)=>({...p, _idx: idx}))
+      .filter(p=>p.dzien===dzienId);
+
+    if(punktyDnia.length===0){
+      body.innerHTML = `<div class="empty-note" style="padding:40px 20px;">Brak punktów programu w tej sali na dzień „${escapeHtml(dzienName(dzienId))}” — dodaj pierwszy powyżej.</div>`;
+      return;
+    }
+
+    const sorted = punktyDnia.sort((a,b)=> (a.start||"").localeCompare(b.start||""));
+
+    let rows = sorted.map(p=>`
+      <tr data-idx="${p._idx}">
+        <td><strong>${escapeHtml(p.start||"-")}</strong> – ${escapeHtml(p.koniec||"-")}</td>
+        <td><span class="typ-pill">${escapeHtml(p.typ || "—")}</span></td>
+        <td>${escapeHtml(p.prowadzący || "—")}</td>
+        <td style="text-align:right;">
+          <button class="btn secondary small edit-punkt" data-idx="${p._idx}">Edytuj</button>
+          <button class="del-punkt" data-idx="${p._idx}" title="Usuń">✕</button>
+        </td>
+      </tr>
+    `).join("");
+
+    body.innerHTML = `
+      <table class="punkty">
+        <thead><tr><th>Godziny</th><th>Typ</th><th>Prowadzący</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }
+
+  document.getElementById("punktyBody").addEventListener("click", e=>{
+    if(currentBlokIdx===null || currentSalaIdx===null) return;
+    const sala = state.Program[currentBlokIdx].Sale[currentSalaIdx];
+    const del = e.target.closest(".del-punkt");
+    if(del){
+      const idx = Number(del.dataset.idx);
+      askConfirm("Usunąć ten punkt programu?").then(ok=>{
+        if(!ok) return;
+        sala.Punkty_programu.splice(idx,1);
+        renderAll(); save();
+      });
+      return;
+    }
+    const edit = e.target.closest(".edit-punkt");
+    if(edit){
+      openPunktDialog(Number(edit.dataset.idx));
+    }
+  });
+
+  // ---------- DIALOG: BLOK ----------
+  const blokDialog = document.getElementById("blokDialog");
+  document.getElementById("addBlokBtn").addEventListener("click", ()=>{
+    document.getElementById("blokDialogTitle").textContent = "Nowy blok";
+    document.getElementById("blokNameInput").value = "";
+    blokDialog.showModal();
+    document.getElementById("blokNameInput").focus();
+  });
+  document.getElementById("blokCancelBtn").addEventListener("click", ()=>blokDialog.close());
+  document.getElementById("blokSaveBtn").addEventListener("click", ()=>{
+    const nazwa = document.getElementById("blokNameInput").value.trim();
+    if(!nazwa) return;
+    state.Program.push({ id: uid(), nazwa_bloku: nazwa, Sale: [] });
+    currentBlokIdx = state.Program.length - 1;
+    currentSalaIdx = null;
+    blokDialog.close();
+    renderAll(); save();
+  });
+  document.getElementById("blokNameInput").addEventListener("keydown", e=>{
+    if(e.key==="Enter") document.getElementById("blokSaveBtn").click();
+  });
+
+  // ---------- DIALOG: SALA ----------
+  const salaDialog = document.getElementById("salaDialog");
+  document.getElementById("addSalaBtn").addEventListener("click", ()=>{
+    if(currentBlokIdx===null){ alert("Najpierw wybierz lub utwórz blok."); return; }
+    document.getElementById("salaDialogTitle").textContent = "Nowa sala";
+    document.getElementById("salaNameInput").value = "";
+    document.getElementById("salaNrInput").value = "";
+    salaDialog.showModal();
+    document.getElementById("salaNameInput").focus();
+  });
+  document.getElementById("salaCancelBtn").addEventListener("click", ()=>salaDialog.close());
+  document.getElementById("salaSaveBtn").addEventListener("click", ()=>{
+    if(currentBlokIdx===null) return;
+    const nazwa = document.getElementById("salaNameInput").value.trim();
+    const nr = document.getElementById("salaNrInput").value.trim();
+    if(!nazwa) return;
+    state.Program[currentBlokIdx].Sale.push({ id: uid(), nazwa_sali: nazwa, nr_sali: nr, Punkty_programu: [] });
+    currentSalaIdx = state.Program[currentBlokIdx].Sale.length - 1;
+    salaDialog.close();
+    renderAll(); save();
+  });
+
+  // ---------- DIALOG: PUNKT PROGRAMU ----------
+  const punktDialog = document.getElementById("punktDialog");
+  let editingPunktIdx = null;
+
+  function fillDzienSelect(selectedId){
+    const sel = document.getElementById("punktDzienInput");
+    sel.innerHTML = state.Dni.map(d=>`<option value="${d.id}">${escapeHtml(dzienLabel(d)||"(bez nazwy)")}</option>`).join("");
+    if(selectedId) sel.value = selectedId;
+  }
+
+  function openPunktDialog(idx){
+    if(currentBlokIdx===null || currentSalaIdx===null) return;
+    editingPunktIdx = (typeof idx === "number") ? idx : null;
+    const sala = state.Program[currentBlokIdx].Sale[currentSalaIdx];
+    if(editingPunktIdx!==null){
+      const p = sala.Punkty_programu[editingPunktIdx];
+      document.getElementById("punktDialogTitle").textContent = "Edytuj punkt programu";
+      fillDzienSelect(p.dzien || currentDzienId());
+      document.getElementById("punktStartInput").value = p.start || "";
+      document.getElementById("punktEndInput").value = p.koniec || "";
+      document.getElementById("punktTypInput").value = p.typ || "";
+      document.getElementById("punktProwadzacyInput").value = p.prowadzący || "";
+    } else {
+      document.getElementById("punktDialogTitle").textContent = "Nowy punkt programu";
+      fillDzienSelect(currentDzienId());
+      document.getElementById("punktStartInput").value = "";
+      document.getElementById("punktEndInput").value = "";
+      document.getElementById("punktTypInput").value = "";
+      document.getElementById("punktProwadzacyInput").value = "";
+    }
+    punktDialog.showModal();
+  }
+
+  document.getElementById("addPunktBtn").addEventListener("click", ()=>openPunktDialog(null));
+  document.getElementById("punktCancelBtn").addEventListener("click", ()=>punktDialog.close());
+  document.getElementById("punktSaveBtn").addEventListener("click", ()=>{
+    if(currentBlokIdx===null || currentSalaIdx===null) return;
+    const dzien = document.getElementById("punktDzienInput").value;
+    const start = document.getElementById("punktStartInput").value;
+    const koniec = document.getElementById("punktEndInput").value;
+    const typ = document.getElementById("punktTypInput").value.trim();
+    const prowadzacy = document.getElementById("punktProwadzacyInput").value.trim();
+    if(!dzien){ alert("Wybierz dzień."); return; }
+    if(!start || !koniec){ alert("Podaj godzinę startu i końca."); return; }
+    if(koniec <= start){ alert("Godzina końca musi być późniejsza niż godzina startu."); return; }
+
+    const sala = state.Program[currentBlokIdx].Sale[currentSalaIdx];
+    const punkt = { id: uid(), dzien, start, koniec, typ, "prowadzący": prowadzacy };
+    if(editingPunktIdx!==null){
+      const oldId = sala.Punkty_programu[editingPunktIdx].id;
+      punkt.id = oldId;
+      sala.Punkty_programu[editingPunktIdx] = punkt;
+    } else {
+      sala.Punkty_programu.push(punkt);
+    }
+    punktDialog.close();
+    renderAll(); save();
+  });
+
+  // ---------- CONFIRM DIALOG ----------
+  const confirmDialog = document.getElementById("confirmDialog");
+  let confirmResolve = null;
+  function askConfirm(text){
+    document.getElementById("confirmDialogText").textContent = text;
+    confirmDialog.showModal();
+    return new Promise(resolve=>{ confirmResolve = resolve; });
+  }
+  document.getElementById("confirmDialogYes").addEventListener("click", ()=>{
+    confirmDialog.close();
+    if(confirmResolve) confirmResolve(true);
+  });
+  document.getElementById("confirmDialogNo").addEventListener("click", ()=>{
+    confirmDialog.close();
+    if(confirmResolve) confirmResolve(false);
+  });
+  confirmDialog.addEventListener("cancel", ()=>{ if(confirmResolve) confirmResolve(false); });
+
+  // ---------- EXPORT / IMPORT JSON ----------
+  function toDateStr(d){
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
+
+  function exportableBlokObj(blok){
+    return {
+      nazwa_bloku: blok.nazwa_bloku,
+      Sale: blok.Sale.map(sala=>({
+        nazwa_sali: sala.nazwa_sali,
+        nr_sali: sala.nr_sali,
+        Punkty_programu: sala.Punkty_programu.map(p=>({
+          dzien: dzienName(p.dzien),
+          start: p.start,
+          koniec: p.koniec,
+          typ: p.typ,
+          "prowadzący": p["prowadzący"]
+        }))
+      }))
+    };
+  }
+
+  function exportableState(){
+    // eksportuje w formacie: Dni (lista nazw) + Program -> Sale -> Punkty_programu (z nazwą dnia zamiast wewnętrznego id)
+    return {
+      Dni: state.Dni.map(d=>({ id: d.id, nazwa_dnia: dzienLabel(d), data: d.data })),
+      Program: state.Program.map(b=>({
+        id: b.id,
+        nazwa_bloku: b.nazwa_bloku,
+        Sale: b.Sale.map(s=>({
+          id: s.id,
+          nazwa_sali: s.nazwa_sali,
+          nr_sali: s.nr_sali,
+          Punkty_programu: s.Punkty_programu.map(pp=>({ id: pp.id, dzien: pp.dzien, start: pp.start, koniec: pp.koniec, typ: pp.typ, "prowadzący": pp["prowadzący"] }))
+        }))
+      }))
+    };
+  }
+
+  function doExport(){
+    if(state.Program.length===0){ alert("Najpierw dodaj co najmniej jeden blok."); return; }
+    if(state.Dni.some(d=>!d.data)){ alert("Każdy dzień musi mieć ustawioną datę (✎ przy dniu)."); return; }
+    const dataStr = JSON.stringify(exportableState(), null, 2);
+    const blob = new Blob([dataStr], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `program-${toDateStr(new Date())}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  document.getElementById("exportJsonBtn").addEventListener("click", doExport);
+  document.getElementById("saveBtn").addEventListener("click", doExport);
+
+  // ---------- EXPORT DO EXCELA ----------
+  function safeSheetName(name){
+    return String(name||"Arkusz").replace(/[\\\/\?\*\[\]:]/g, " ").slice(0,31) || "Arkusz";
+  }
+
+  document.getElementById("exportXlsxBtn").addEventListener("click", ()=>{
+    if(typeof XLSX === "undefined"){ alert("Biblioteka Excel nie została załadowana (brak połączenia z internetem)."); return; }
+    if(state.Program.length===0){ alert("Najpierw dodaj co najmniej jeden blok z salą i punktem programu."); return; }
+
+    const multiDay = state.Dni.length > 1;
+    const wb = XLSX.utils.book_new();
+    const usedNames = new Set();
+
+    function appendSheet(name, matrix){
+      let sheetName = safeSheetName(name);
+      let n = 2;
+      while(usedNames.has(sheetName)){ sheetName = safeSheetName(name).slice(0,28)+" "+n; n++; }
+      usedNames.add(sheetName);
+      const ws = XLSX.utils.aoa_to_sheet(matrix);
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    }
+
+    // arkusz zbiorczy: wszystkie punkty programu ze wszystkich dni, działów i sal
+    const allHeader = ["Dzień", "Blok", "Sala", "Nr sali", "Start", "Koniec", "Typ", "Prowadzący"];
+    const allRows = [];
+    state.Program.forEach(blok=>{
+      blok.Sale.forEach(sala=>{
+        sala.Punkty_programu.forEach(p=>{
+          allRows.push([dzienName(p.dzien), blok.nazwa_bloku, sala.nazwa_sali, sala.nr_sali, p.start, p.koniec, p.typ, p["prowadzący"]]);
+        });
+      });
+    });
+    allRows.sort((a,b)=>{
+      if(a[0]!==b[0]) return String(a[0]).localeCompare(String(b[0]),'pl');
+      if(a[1]!==b[1]) return String(a[1]).localeCompare(String(b[1]),'pl');
+      if(a[2]!==b[2]) return String(a[2]).localeCompare(String(b[2]),'pl');
+      return String(a[4]).localeCompare(String(b[4]),'pl');
+    });
+    appendSheet("Wszystkie punkty", [allHeader, ...allRows]);
+
+    // osobny arkusz na każdy dział (blok), ze wszystkimi dniami razem (kolumna „Dzień” rozróżnia daty)
+    const deptHeader = multiDay
+      ? ["Dzień", "Sala", "Nr sali", "Start", "Koniec", "Typ", "Prowadzący"]
+      : ["Sala", "Nr sali", "Start", "Koniec", "Typ", "Prowadzący"];
+    state.Program.forEach(blok=>{
+      const rows = [];
+      blok.Sale.forEach(sala=>{
+        sala.Punkty_programu.forEach(p=>{
+          rows.push(multiDay
+            ? [dzienName(p.dzien), sala.nazwa_sali, sala.nr_sali, p.start, p.koniec, p.typ, p["prowadzący"]]
+            : [sala.nazwa_sali, sala.nr_sali, p.start, p.koniec, p.typ, p["prowadzący"]]);
+        });
+      });
+      rows.sort((a,b)=>{
+        for(let i=0;i<a.length-1;i++){ if(a[i]!==b[i]) return String(a[i]).localeCompare(String(b[i]),'pl'); }
+        return 0;
+      });
+      appendSheet(blok.nazwa_bloku || "Blok", [deptHeader, ...rows]);
+    });
+
+    XLSX.writeFile(wb, `program-${toDateStr(new Date())}.xlsx`);
+  });
+
+  // ---------- EXPORT / IMPORT POJEDYNCZEGO BLOKU ----------
+  function safeFileName(name){
+    return (name||"blok").replace(/[\\\/\?\*\[\]:"<>|]/g, "_").trim() || "blok";
+  }
+
+  function exportSingleBlok(blok){
+    const dataStr = JSON.stringify(exportableBlokObj(blok), null, 2);
+    const blob = new Blob([dataStr], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `blok-${safeFileName(blok.nazwa_bloku)}-${toDateStr(new Date())}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  // Podczas importu bloku punkty programu z niewczytanymi dniami (nazwa dnia z pliku) są
+  // dopasowywane do istniejących dni po nazwie; jeśli takiego dnia nie ma, jest tworzony automatycznie.
+  function resolveOrCreateDzienByName(nazwa){
+    if(!nazwa) return currentDzienId();
+    let d = state.Dni.find(d=>d.id===nazwa || dzienLabel(d)===nazwa);
+    if(!d){
+      d = normalizeDzien({ nazwa_dnia: nazwa });
+      state.Dni.push(d);
+    }
+    return d.id;
+  }
+
+  function normalizeImportedBlok(blok){
+    return {
+      id: uid(),
+      nazwa_bloku: blok.nazwa_bloku || "",
+      Sale: (blok.Sale||[]).map(sala=>({
+        id: uid(),
+        nazwa_sali: sala.nazwa_sali || "",
+        nr_sali: sala.nr_sali || "",
+        Punkty_programu: (sala.Punkty_programu||[]).map(p=>({
+          id: uid(),
+          dzien: typeof p.dzien === "string" ? resolveOrCreateDzienByName(p.dzien) : (currentDzienId()),
+          start: p.start || "",
+          koniec: p.koniec || "",
+          typ: p.typ || "",
+          "prowadzący": p["prowadzący"] || ""
+        }))
+      }))
+    };
+  }
+
+  document.getElementById("importBlokBtn").addEventListener("click", ()=>{
+    document.getElementById("importBlokInput").click();
+  });
+  document.getElementById("importBlokInput").addEventListener("change", function(){
+    const file = this.files[0];
+    if(!file) return;
+    const inputEl = this;
+    const reader = new FileReader();
+    reader.onload = function(evt){
+      try{
+        const parsed = JSON.parse(evt.target.result);
+        // akceptuje pojedynczy blok {nazwa_bloku, Sale}, pełny plik {Program:[...]} lub starszy format z dniami
+        let blokRaw = null;
+        if(parsed && typeof parsed === "object" && !Array.isArray(parsed)){
+          if(Array.isArray(parsed.Program) && parsed.Program.length){
+            blokRaw = parsed.Program[0];
+          } else if(Array.isArray(parsed.Dni) && parsed.Dni.length && Array.isArray(parsed.Dni[0].Program) && parsed.Dni[0].Program.length){
+            blokRaw = parsed.Dni[0].Program[0];
+          } else if("nazwa_bloku" in parsed || "Sale" in parsed){
+            blokRaw = parsed;
+          }
+        }
+        if(!blokRaw) throw new Error("bad file");
+        const newBlok = normalizeImportedBlok(blokRaw);
+        state.Program.push(newBlok);
+        currentBlokIdx = state.Program.length - 1;
+        currentSalaIdx = null;
+        renderAll(); save();
+      }catch(err){
+        alert("Nie udało się wczytać bloku. Upewnij się, że to poprawny plik .json z blokiem (nazwa_bloku, Sale, Punkty_programu).");
+      }
+      inputEl.value = "";
+    };
+    reader.readAsText(file);
+  });
+
+  document.getElementById("importJsonBtn").addEventListener("click", ()=>{
+    document.getElementById("importJsonInput").click();
+  });
+  document.getElementById("importJsonInput").addEventListener("change", function(){
+    const file = this.files[0];
+    if(!file) return;
+    const inputEl = this;
+    const reader = new FileReader();
+    reader.onload = function(evt){
+      try{
+        const parsed = JSON.parse(evt.target.result);
+
+        if(parsed && Array.isArray(parsed.Program) && (!parsed.Dni || Array.isArray(parsed.Dni))){
+          // aktualny (globalny) format: Dni (lista nazw) + Program wspólny
+          const dniObjs = (parsed.Dni||[]).map(normalizeDzien);
+          if(!dniObjs.length) dniObjs.push({id: uid(), nazwa_dnia:"", data: toDateStr(new Date())});
+          const nameToId = {};
+          dniObjs.forEach((d,i)=>{
+            const raw = (parsed.Dni||[])[i] || {};
+            [raw.id, raw.nazwa_dnia, raw.nazwa, d.id, dzienLabel(d)].forEach(k=>{ if(k) nameToId[k] = d.id; });
+          });
+
+          const program = parsed.Program.map(blok=>({
+            nazwa_bloku: blok.nazwa_bloku,
+            Sale: (blok.Sale||[]).map(sala=>({
+              nazwa_sali: sala.nazwa_sali,
+              nr_sali: sala.nr_sali,
+              Punkty_programu: (sala.Punkty_programu||[]).map(p=>{
+                let dzienId = nameToId[p.dzien];
+                if(!dzienId){
+                  // nieznana nazwa dnia w pliku — dopisz taki dzień
+                  dzienId = uid();
+                  dniObjs.push({id: dzienId, nazwa_dnia: p.dzien || "Dzień 1"});
+                  nameToId[p.dzien] = dzienId;
+                }
+                return { ...p, dzien: dzienId };
+              })
+            }))
+          }));
+
+          state = normalizeState({ Dni: dniObjs, Program: program });
+        } else if(parsed && Array.isArray(parsed.Dni) && parsed.Dni.length && Array.isArray(parsed.Dni[0].Program)){
+          // starszy format v2: bloki zagnieżdżone osobno w każdym dniu — scal je
+          state = migrateFromV2(parsed);
+        } else {
+          throw new Error("bad file");
+        }
+
+        currentDzienIdx = state.Dni.length ? 0 : null;
+        currentBlokIdx = state.Program.length ? 0 : null;
+        currentSalaIdx = null;
+        renderAll(); save();
+      }catch(err){
+        alert("Nie udało się wczytać pliku. Upewnij się, że to poprawny plik .json zgodny ze schematem programu.");
+      }
+      inputEl.value = "";
+    };
+    reader.readAsText(file);
+  });
+
+  // ---------- PODGLĄD TABELI (Dni | Godziny | Blok > Sala > Punkt) ----------
+  function buildPreviewModel(){
+    // kolumny: lista { blokNazwa, salaId, salaNazwa }
+    const columns = [];
+    state.Program.forEach(blok=>{
+      blok.Sale.forEach(sala=>{
+        columns.push({ blokNazwa: blok.nazwa_bloku || "(bez nazwy)", salaId: sala.id, salaNazwa: sala.nazwa_sali || "(bez nazwy)", sala });
+      });
+    });
+
+    // grupowanie kolumn wg bloku (do nagłówka z colspan)
+    const blokGroups = [];
+    columns.forEach(col=>{
+      let g = blokGroups.find(g=>g.blokNazwa===col.blokNazwa);
+      if(!g){ g = { blokNazwa: col.blokNazwa, cols: [] }; blokGroups.push(g); }
+      g.cols.push(col);
+    });
+
+    // wiersze: dla każdego dnia — zbiór wszystkich unikalnych godzin startu użytych w jakiejkolwiek sali tego dnia
+    const dayRows = state.Dni.map(dzien=>{
+      const timesSet = new Set();
+      columns.forEach(col=>{
+        col.sala.Punkty_programu.forEach(p=>{
+          if(p.dzien===dzien.id && p.start) timesSet.add(p.start);
+        });
+      });
+      const times = Array.from(timesSet).sort();
+      return { dzien, times };
+    });
+
+    return { columns, blokGroups, dayRows };
+  }
+
+  function renderPreview(){
+    const wrap = document.getElementById("previewWrap");
+    const model = buildPreviewModel();
+
+    if(model.columns.length===0){
+      wrap.innerHTML = '<div class="empty-preview">Dodaj bloki i sale, aby zobaczyć podgląd tabeli.</div>';
+      return;
+    }
+    const anyRows = model.dayRows.some(d=>d.times.length>0);
+    if(!anyRows){
+      wrap.innerHTML = '<div class="empty-preview">Brak punktów programu — dodaj je w kolumnie „Punkty programu”, aby zobaczyć podgląd.</div>';
+      return;
+    }
+
+    let theadRow1 = `<th class="col-dni" rowspan="2">Dni</th><th class="col-godz" rowspan="2">Godziny</th>`;
+    model.blokGroups.forEach(g=>{
+      theadRow1 += `<th colspan="${g.cols.length}">${escapeHtml(g.blokNazwa)}</th>`;
+    });
+
+    let theadRow2 = "";
+    model.blokGroups.forEach(g=>{
+      g.cols.forEach(col=>{
+        theadRow2 += `<th>${escapeHtml(col.salaNazwa)}</th>`;
+      });
+    });
+
+    let tbody = "";
+    model.dayRows.forEach(dayRow=>{
+      if(dayRow.times.length===0) return;
+      dayRow.times.forEach((time, ti)=>{
+        tbody += "<tr>";
+        if(ti===0){
+          tbody += `<td class="col-dni" rowspan="${dayRow.times.length}">${escapeHtml(dzienLabel(dayRow.dzien) || "(bez nazwy)")}</td>`;
+        }
+        tbody += `<td class="col-godz">${escapeHtml(time)}</td>`;
+        model.columns.forEach(col=>{
+          const p = col.sala.Punkty_programu.find(p=>p.dzien===dayRow.dzien.id && p.start===time);
+          if(p){
+            tbody += `<td class="punkt-cell"><span class="p-typ">${escapeHtml(p.typ || "(bez tytułu)")}</span>${p["prowadzący"] ? `<span class="p-prow">${escapeHtml(p["prowadzący"])}</span>` : ""}</td>`;
+          } else {
+            tbody += `<td></td>`;
+          }
+        });
+        tbody += "</tr>";
+      });
+    });
+
+    wrap.innerHTML = `<table class="preview">
+      <thead><tr>${theadRow1}</tr><tr>${theadRow2}</tr></thead>
+      <tbody>${tbody}</tbody>
+    </table>`;
+  }
+
+  document.getElementById("copyPreviewBtn").addEventListener("click", async ()=>{
+    const model = buildPreviewModel();
+    if(model.columns.length===0){ alert("Najpierw dodaj bloki i sale."); return; }
+
+    const headerRow1 = ["Dni","Godziny"];
+    model.blokGroups.forEach(g=>{ g.cols.forEach((c,i)=>{ headerRow1.push(i===0 ? g.blokNazwa : ""); }); });
+    const headerRow2 = ["",""];
+    model.blokGroups.forEach(g=>{ g.cols.forEach(c=>headerRow2.push(c.salaNazwa)); });
+
+    const rows = [];
+    model.dayRows.forEach(dayRow=>{
+      dayRow.times.forEach((time, ti)=>{
+        const row = [ti===0 ? dzienLabel(dayRow.dzien) : "", time];
+        model.columns.forEach(col=>{
+          const p = col.sala.Punkty_programu.find(p=>p.dzien===dayRow.dzien.id && p.start===time);
+          row.push(p ? (p.typ || "") + (p["prowadzący"] ? ` (${p["prowadzący"]})` : "") : "");
+        });
+        rows.push(row);
+      });
+    });
+
+    const tsv = [headerRow1, headerRow2, ...rows].map(r=>r.join("\t")).join("\n");
+
+    let html = "<table><tr>" + headerRow1.map(c=>`<th>${escapeHtml(c)}</th>`).join("") + "</tr>";
+    html += "<tr>" + headerRow2.map(c=>`<th>${escapeHtml(c)}</th>`).join("") + "</tr>";
+    rows.forEach(r=>{ html += "<tr>" + r.map(c=>`<td>${escapeHtml(c)}</td>`).join("") + "</tr>"; });
+    html += "</table>";
+
+    try{
+      if(navigator.clipboard && window.ClipboardItem){
+        const item = new ClipboardItem({
+          "text/plain": new Blob([tsv], {type:"text/plain"}),
+          "text/html": new Blob([html], {type:"text/html"})
+        });
+        await navigator.clipboard.write([item]);
+      } else {
+        await navigator.clipboard.writeText(tsv);
+      }
+      alert("Tabela skopiowana! Wklej ją (Ctrl+V) w Excelu lub Google Sheets/Docs.");
+    }catch(err){
+      try{
+        await navigator.clipboard.writeText(tsv);
+        alert("Tabela skopiowana jako zwykły tekst!");
+      }catch(err2){
+        alert("Nie udało się skopiować automatycznie. Spróbuj ponownie.");
+      }
+    }
+  });
+
+  function renderAll(){
+    renderDni();
+    renderBloki();
+    renderSale();
+    renderPunkty();
+    renderPreview();
+  }
+
+  // init
+  load();
+  if(currentDzienIdx===null && state.Dni.length) currentDzienIdx = 0;
+  if(state.Dni.length===0){
+    state.Dni.push({ id: uid(), nazwa_dnia: "", data: toDateStr(new Date()) });
+    currentDzienIdx = 0;
+  }
+  if(currentBlokIdx===null && state.Program.length) currentBlokIdx = 0;
+  renderAll();
+
+})();
+</script>
+<script>(()=>{const cv=document.getElementById('bg'),cx=cv.getContext('2d'),B=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5],P=['#0b0d0c','#2d5a43','#d97a2b'].map(h=>[1,3,5].map(i=>parseInt(h.substr(i,2),16))),mix=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
+function draw(){const w=cv.width=Math.ceil(innerWidth/4),h=cv.height=Math.ceil(innerHeight/4),im=cx.createImageData(w,h),d=im.data;
+for(let y=0,k=0;y<h;y++)for(let x=0;x<w;x++,k+=4){let p=(x/w+y/h)/2*.95+.06*Math.sin(x/w*6)+.05*Math.sin(y/h*5);p=Math.round(Math.min(1,Math.max(0,p+(B[(y&3)*4+(x&3)]/16-.5)*.3))*4)/4;const c=p<.5?mix(P[0],P[1],p*2):mix(P[1],P[2],(p-.5)*2);d[k]=c[0];d[k+1]=c[1];d[k+2]=c[2];d[k+3]=255}cx.putImageData(im,0,0)}
+draw();addEventListener('resize',draw)})()</script>
+</body>
+</html>
